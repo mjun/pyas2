@@ -15,6 +15,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='partner',
             name='extra_headers',
-            field=models.TextField(null=True),
+            field=models.TextField(null=True, blank=True),
         ),
     ]
