@@ -2,3 +2,4 @@ pyAS2 is written and maintained by Abhishek Ram <abhishek.ram@me.com> `@abhishek
 
 - Michael Reinig (`@MReinigJr <https://github.com/MReinigJr>`_)
 - `@klaasfeenstra <https://github.com/klaasfeenstra>`_
+- Matko Jun (`@mjun <https://github.com/>`_)

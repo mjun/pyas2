@@ -141,6 +141,7 @@ class Partner(models.Model):
             'Command executed after successful message receipt, replacements are $filename, $fullfilename, '
             '$sender, $recevier, $messageid and any message header such as $Subject')
     )
+    extra_headers = models.TextField(null=True)
 
     def __str__(self):
         return self.name

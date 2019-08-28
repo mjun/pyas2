@@ -90,5 +90,7 @@ Field Name                      Description                                     
                                 replacements are ``$filename``, ``$fullfilename``, 
                                 ``$sender``, ``$recevier``, ``$messageid`` and any 
                                 message header such as ``$Subject``.
+``Extra headers``               If specified, these headers are added to message       No
+                                before sending to partner.
 ==============================  =====================================================  =========
 

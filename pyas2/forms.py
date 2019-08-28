@@ -1,6 +1,9 @@
+from django.core.exceptions import ValidationError
+
 from pyas2 import models
 from django import forms
 from pyas2 import viewlib
+from django.utils.translation import ugettext_lazy as _
 
 HIDDEN_INPUT = forms.widgets.HiddenInput
 
@@ -27,6 +30,18 @@ class PartnerForm(forms.ModelForm):
             self._errors['signature_key'] = self.error_class(
                 ['Signature Key is mandatory when signed mdn is requested'])
         return cleaned_data
+
+    def clean_extra_headers(self):
+        value = self.cleaned_data.get('extra_headers')
+        if value:
+            for header in value.split("\n"):
+                if len(header.split(":")) != 2:
+                    raise ValidationError(
+                        _("Invalid extra headers. Make sure there is one header"
+                          " definition per line and that each line consists "
+                          "of header name and header value separated by a single colon."))
+
+        return value
 
     class Meta:
         model = models.Partner

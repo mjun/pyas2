@@ -17,11 +17,10 @@ setup(
     description='A pythonic AS2 application for file tranfers.',
     long_description=README,
     url='http://pyas2.readthedocs.org/en/latest/',
-    download_url='https://github.com/abhishek-ram/pyas2/archive/master.zip',
+    download_url='https://github.com/mjun/pyas2/archive/master.zip',
     author='Abhishek Ram',
     author_email='abhishek8816@gmail.com',
     classifiers=[
-        #'Development Status :: 4 - Beta',
         'Development Status :: 5 - Production/Stable',
         'Environment :: Web Environment',
         'Framework :: Django',
@@ -39,7 +38,7 @@ setup(
     ],
     keywords='AS2 AS2Server RFC4130 FileTransfer',
     install_requires=[
-        'django>1.9, <=1.10.6',
+        'django>1.9, <1.12',
         'cherrypy>6, <=8.9.1',
         'requests',
         'm2crypto',

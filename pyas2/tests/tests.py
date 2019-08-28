@@ -51,7 +51,8 @@ class AS2SendReceiveTest(TestCase):
             compress=False,
             mdn=False,
             signature_key=cls.client_crt,
-            encryption_key=cls.client_crt
+            encryption_key=cls.client_crt,
+            extra_headers="Test: test"
         )
 
         # Setup the client organization and partner

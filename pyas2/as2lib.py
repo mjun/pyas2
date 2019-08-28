@@ -299,6 +299,10 @@ def build_mdn(message, status, **kwargs):
         for key in mdn_message.keys():
             mdn_headers += '%s: %s\n' % (key, mdn_message[key])
 
+        # Add partner's extra headers
+        if message.partner.extra_headers:
+            message.headers += message.partner.extra_headers
+
         # Is Async mdn is requested mark MDN as pending and return None
         if message_header.get('receipt-delivery-option'):
             message.mdn = models.MDN.objects.create(message_id=filename,
@@ -438,6 +442,11 @@ def build_message(message):
     message.headers = ''
     for key in as2_header:
         message.headers += '%s: %s\n' % (key, as2_header[key])
+
+    # Add partner's extra headers
+    if message.partner.extra_headers:
+        message.headers += message.partner.extra_headers
+
     message.save()
 
     models.Log.objects.create(message=message,
