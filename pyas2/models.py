@@ -48,8 +48,8 @@ class PublicCertificate(models.Model):
 
 
 class Organization(models.Model):
-    name = models.CharField(verbose_name=_('Organization Name'), max_length=100)
-    as2_name = models.CharField(verbose_name=_('AS2 Identifier'), max_length=100, primary_key=True)
+    name = models.CharField(verbose_name=_('Organization Name'), max_length=100, primary_key=True)
+    as2_name = models.CharField(verbose_name=_('AS2 Identifier'), max_length=100, unique=True)
     email_address = models.EmailField(null=True, blank=True)
     encryption_key = models.ForeignKey(PrivateCertificate, related_name='enc_org', null=True, blank=True)
     signature_key = models.ForeignKey(PrivateCertificate, related_name='sign_org', null=True, blank=True)
@@ -95,8 +95,8 @@ class Partner(models.Model):
         blank=True,
         help_text=_('Use this field to send a customized message in the MDN Confirmations for this Partner')
     )
-    name = models.CharField(verbose_name=_('Partner Name'), max_length=100)
-    as2_name = models.CharField(verbose_name=_('AS2 Identifier'), max_length=100, primary_key=True)
+    name = models.CharField(verbose_name=_('Partner Name'), max_length=100, primary_key=True)
+    as2_name = models.CharField(verbose_name=_('AS2 Identifier'), max_length=100)
     email_address = models.EmailField(null=True, blank=True)
     http_auth = models.BooleanField(verbose_name=_('Enable Authentication'), default=False)
     http_auth_user = models.CharField(max_length=100, null=True, blank=True)
@@ -141,10 +141,19 @@ class Partner(models.Model):
             'Command executed after successful message receipt, replacements are $filename, $fullfilename, '
             '$sender, $recevier, $messageid and any message header such as $Subject')
     )
-    extra_headers = models.TextField(null=True, blank=True)
+    extra_headers = models.TextField(verbose_name=_('Extra Headers'), null=True, blank=True)
 
     def __str__(self):
         return self.name
+
+    def extra_headers_as_dict(self):
+        if self.extra_headers:
+            extra_headers_dict = {}
+            for extra_header in self.extra_headers.split("\n"):
+                header, value = extra_header.split(":")
+                extra_headers_dict[header.strip()] = value.strip()
+            return extra_headers_dict
+        return {}
 
 
 class Message(models.Model):

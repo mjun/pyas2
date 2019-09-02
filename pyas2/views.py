@@ -396,9 +396,9 @@ def as2receive(request, *args, **kwargs):
             # Load the request header and body as a MIME Email Message
             payload = email.message_from_string(request_content)
 
-            # Get the message sender and receiver AS2 IDs
-            message_org = as2utils.unescape_as2name(payload.get('as2-to'))
-            message_partner = as2utils.unescape_as2name(payload.get('as2-from'))
+            # Get the message sender and receiver AS2 identifiers
+            message_org_as2name = as2utils.unescape_as2name(payload.get('as2-to'))
+            message_partner_as2name = as2utils.unescape_as2name(payload.get('as2-from'))
             message = None
 
             # Check if this is an MDN message
@@ -418,11 +418,13 @@ def as2receive(request, *args, **kwargs):
                     if part.get_content_type() == 'message/disposition-notification':
                         msg_id = part.get_payload().pop().get('Original-Message-ID')
                 pyas2init.logger.info('Asynchronous MDN received for AS2 message %s to organization %s '
-                                      'from partner %s' % (msg_id, message_org, message_partner))
+                                      'from partner %s' % (msg_id, message_org_as2name, message_partner_as2name))
                 try:
                     # Get the related organization, partner and message from the db.
-                    org = get_object_or_404(models.Organization, as2_name=message_org)
-                    partner = get_object_or_404(models.Partner, as2_name=message_partner)
+                    org = get_object_or_404(models.Organization, as2_name=message_org_as2name)
+                    partner = as2lib.get_partner_from_payload(payload)
+                    if not partner:
+                        raise Http404('No Partner matches the given query.')
                     message = get_object_or_404(models.Message, message_id=msg_id.strip('<>'), organization=org, partner=partner)
                     models.Log.objects.create(message=message,
                                               status='S',
@@ -458,7 +460,7 @@ def as2receive(request, *args, **kwargs):
                     status, adv_status, status_message = '', '', ''
 
                     pyas2init.logger.info('Received an AS2 message with id %s for organization %s from partner %s' %
-                                          (payload.get('message-id'), message_org, message_partner))
+                                          (payload.get('message-id'), message_org_as2name, message_partner_as2name))
 
                     # Raise duplicate message error in case message already exists in the system
                     # TODO: Create composite key (message_id, organization, partner)
