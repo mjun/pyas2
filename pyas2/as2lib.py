@@ -75,7 +75,7 @@ def save_message(message, payload, raw_payload):
         if message.partner.encryption and payload.get_content_type() != 'application/pkcs7-mime':
             raise as2utils.As2InsufficientSecurity(
                 u'Incoming messages from AS2 partner {0:s} are defined to be encrypted'.format(
-                    message.partner.as2_name))
+                    message.partner.as2_identifier))
 
         # Check if payload is encrypted and if so decrypt it
         if payload.get_content_type() == 'application/pkcs7-mime' \
@@ -120,7 +120,7 @@ def save_message(message, payload, raw_payload):
         # Check if message from this partner are expected to be signed
         if message.partner.signature and payload.get_content_type() != 'multipart/signed':
             raise as2utils.As2InsufficientSecurity(
-                u'Incoming messages from AS2 partner {0:s} are defined to be signed'.format(message.partner.as2_name))
+                u'Incoming messages from AS2 partner {0:s} are defined to be signed'.format(message.partner.as2_identifier))
 
         # Check if message is signed and if so verify it
         if payload.get_content_type() == 'multipart/signed':
@@ -354,7 +354,7 @@ def build_message(message):
         'MIME-Version': '1.0',
         'Message-ID': '<%s>' % message.message_id,
         'AS2-From': as2utils.escape_as2name(message.organization.as2_name),
-        'AS2-To': as2utils.escape_as2name(message.partner.as2_name),
+        'AS2-To': as2utils.escape_as2name(message.partner.as2_identifier),
         'Subject': message.partner.subject,
         'Date': email_datetime,
         'recipient-address': message.partner.target_url,
@@ -649,7 +649,7 @@ def run_post_send(message):
         variables = {
             'filename': message.payload.name,
             'sender': message.organization.as2_name,
-            'recevier': message.partner.as2_name,
+            'recevier': message.partner.as2_identifier,
             'messageid': message.message_id
         }
         variables.update(dict(HeaderParser().parsestr(message.headers).items()))
@@ -670,7 +670,7 @@ def run_post_receive(message, full_filename):
             'filename': message.payload.name,
             'fullfilename': full_filename,
             'sender': message.organization.as2_name,
-            'recevier': message.partner.as2_name,
+            'recevier': message.partner.as2_identifier,
             'messageid': message.message_id
         }
         variables.update(dict(HeaderParser().parsestr(message.headers).items()))
@@ -681,7 +681,7 @@ def run_post_receive(message, full_filename):
 
 def get_partner_from_payload(payload):
     message_partner_as2name = as2utils.unescape_as2name(payload.get('as2-from'))
-    partners = models.Partner.objects.filter(as2_name=message_partner_as2name)
+    partners = models.Partner.objects.filter(as2_identifier=message_partner_as2name)
 
     # We got a single partner so just return it
     if partners.count() == 1:

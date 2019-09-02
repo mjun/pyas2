@@ -159,9 +159,9 @@ class Command(BaseCommand):
             for org in orgs:
                 dir_watch_data.append({})
                 dir_watch_data[-1]['path'] = as2utils.join(pyas2init.gsettings['root_dir'], 'messages',
-                                                           partner.as2_name, 'outbox', org.as2_name)
+                                                           partner.as2_identifier, 'outbox', org.as2_name)
                 dir_watch_data[-1]['organization'] = org.as2_name
-                dir_watch_data[-1]['partner'] = partner.as2_name
+                dir_watch_data[-1]['partner'] = partner.as2_identifier
         if not dir_watch_data:
             pyas2init.logger.error(_(u'No partners have been configured!'))
             sys.exit(0)

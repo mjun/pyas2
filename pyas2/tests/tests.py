@@ -46,7 +46,7 @@ class AS2SendReceiveTest(TestCase):
         )
         models.Partner.objects.create(
             name='Server Partner',
-            as2_name='as2client',
+            as2_identifier='as2client',
             target_url='http://localhost:8080/pyas2/as2receive',
             compress=False,
             mdn=False,
@@ -56,7 +56,7 @@ class AS2SendReceiveTest(TestCase):
         )
         models.Partner.objects.create(
             name='Server Partner 2',
-            as2_name='as2client',
+            as2_identifier='as2client',
             target_url='http://localhost:8080/pyas2/as2receive',
             compress=False,
             mdn=False,
@@ -90,7 +90,7 @@ class AS2SendReceiveTest(TestCase):
 
         # Create the partner with appropriate settings for this case
         partner = models.Partner.objects.create(name='Client Partner',
-                                                as2_name='as2server',
+                                                as2_identifier='as2server',
                                                 target_url='http://localhost:8080/pyas2/as2receive',
                                                 compress=False,
                                                 mdn=False)
@@ -114,7 +114,7 @@ class AS2SendReceiveTest(TestCase):
 
         # Create the partner with appropriate settings for this case
         partner = models.Partner.objects.create(name='Client Partner',
-                                                as2_name='as2server',
+                                                as2_identifier='as2server',
                                                 target_url='http://localhost:8080/pyas2/as2receive',
                                                 compress=False,
                                                 mdn=True)
@@ -142,7 +142,7 @@ class AS2SendReceiveTest(TestCase):
 
         # Create the partner with appropriate settings for this case
         partner = models.Partner.objects.create(name='Client Partner',
-                                                as2_name='as2server',
+                                                as2_identifier='as2server',
                                                 target_url='http://localhost:8080/pyas2/as2receive',
                                                 compress=False,
                                                 mdn=True,
@@ -175,7 +175,7 @@ class AS2SendReceiveTest(TestCase):
 
         # Create the partner with appropriate settings for this case
         partner = models.Partner.objects.create(name='Client Partner',
-                                                as2_name='as2server',
+                                                as2_identifier='as2server',
                                                 target_url='http://localhost:8080/pyas2/as2receive',
                                                 compress=False,
                                                 encryption='des_ede3_cbc',
@@ -202,7 +202,7 @@ class AS2SendReceiveTest(TestCase):
 
         # Create the partner with appropriate settings for this case
         partner = models.Partner.objects.create(name='Client Partner',
-                                                as2_name='as2server',
+                                                as2_identifier='as2server',
                                                 target_url='http://localhost:8080/pyas2/as2receive',
                                                 compress=False,
                                                 encryption='des_ede3_cbc',
@@ -234,7 +234,7 @@ class AS2SendReceiveTest(TestCase):
 
         # Create the partner with appropriate settings for this case
         partner = models.Partner.objects.create(name='Client Partner',
-                                                as2_name='as2server',
+                                                as2_identifier='as2server',
                                                 target_url='http://localhost:8080/pyas2/as2receive',
                                                 compress=False,
                                                 encryption='des_ede3_cbc',
@@ -269,7 +269,7 @@ class AS2SendReceiveTest(TestCase):
 
         # Create the partner with appropriate settings for this case
         partner = models.Partner.objects.create(name='Client Partner',
-                                                as2_name='as2server',
+                                                as2_identifier='as2server',
                                                 target_url='http://localhost:8080/pyas2/as2receive',
                                                 compress=False,
                                                 signature='sha1',
@@ -296,7 +296,7 @@ class AS2SendReceiveTest(TestCase):
 
         # Create the partner with appropriate settings for this case
         partner = models.Partner.objects.create(name='Client Partner',
-                                                as2_name='as2server',
+                                                as2_identifier='as2server',
                                                 target_url='http://localhost:8080/pyas2/as2receive',
                                                 compress=False,
                                                 signature='sha1',
@@ -328,7 +328,7 @@ class AS2SendReceiveTest(TestCase):
 
         # Create the partner with appropriate settings for this case
         partner = models.Partner.objects.create(name='Client Partner',
-                                                as2_name='as2server',
+                                                as2_identifier='as2server',
                                                 target_url='http://localhost:8080/pyas2/as2receive',
                                                 compress=False,
                                                 signature='sha1',
@@ -361,7 +361,7 @@ class AS2SendReceiveTest(TestCase):
 
         # Create the partner with appropriate settings for this case
         partner = models.Partner.objects.create(name='Client Partner',
-                                                as2_name='as2server',
+                                                as2_identifier='as2server',
                                                 target_url='http://localhost:8080/pyas2/as2receive',
                                                 compress=False,
                                                 signature='sha1',
@@ -390,7 +390,7 @@ class AS2SendReceiveTest(TestCase):
 
         # Create the partner with appropriate settings for this case
         partner = models.Partner.objects.create(name='Client Partner',
-                                                as2_name='as2server',
+                                                as2_identifier='as2server',
                                                 target_url='http://localhost:8080/pyas2/as2receive',
                                                 compress=False,
                                                 encryption='des_ede3_cbc',
@@ -424,7 +424,7 @@ class AS2SendReceiveTest(TestCase):
 
         # Create the partner with appropriate settings for this case
         partner = models.Partner.objects.create(name='Client Partner',
-                                                as2_name='as2server',
+                                                as2_identifier='as2server',
                                                 target_url='http://localhost:8080/pyas2/as2receive',
                                                 compress=False,
                                                 encryption='des_ede3_cbc',
@@ -459,7 +459,7 @@ class AS2SendReceiveTest(TestCase):
 
         # Create the partner with appropriate settings for this case
         partner = models.Partner.objects.create(name='Client Partner',
-                                                as2_name='as2server',
+                                                as2_identifier='as2server',
                                                 target_url='http://localhost:8080/pyas2/as2receive',
                                                 compress=True,
                                                 encryption='des_ede3_cbc',
@@ -494,7 +494,7 @@ class AS2SendReceiveTest(TestCase):
 
         # Create the partner with appropriate settings for this case
         partner = models.Partner.objects.create(name='Client Partner',
-                                                as2_name='as2server',
+                                                as2_identifier='as2server',
                                                 target_url='http://localhost:8080/pyas2/as2receive',
                                                 compress=False,
                                                 encryption='des_ede3_cbc',
@@ -623,7 +623,7 @@ class AS2SterlingIntegratorTest(TestCase):
 
         cls.partner = models.Partner.objects.create(
             name='Sterling B2B Integrator',
-            as2_name='SIAS2PRD',
+            as2_identifier='SIAS2PRD',
             target_url='http://localhost:8080/pyas2/as2receive',
             compress=False,
             mdn=False,
@@ -633,7 +633,7 @@ class AS2SterlingIntegratorTest(TestCase):
         )
         cls.partner = models.Partner.objects.create(
             name='Sterling B2B Integrator 2',
-            as2_name='SIAS2PRD',
+            as2_identifier='SIAS2PRD',
             target_url='http://localhost:8080/pyas2/as2receive',
             compress=False,
             mdn=False,

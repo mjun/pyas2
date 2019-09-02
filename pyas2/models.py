@@ -48,8 +48,8 @@ class PublicCertificate(models.Model):
 
 
 class Organization(models.Model):
-    name = models.CharField(verbose_name=_('Organization Name'), max_length=100, primary_key=True)
-    as2_name = models.CharField(verbose_name=_('AS2 Identifier'), max_length=100, unique=True)
+    name = models.CharField(verbose_name=_('Organization Name'), max_length=100, unique=True)
+    as2_name = models.CharField(verbose_name=_('AS2 Identifier'), max_length=100, primary_key=True)
     email_address = models.EmailField(null=True, blank=True)
     encryption_key = models.ForeignKey(PrivateCertificate, related_name='enc_org', null=True, blank=True)
     signature_key = models.ForeignKey(PrivateCertificate, related_name='sign_org', null=True, blank=True)
@@ -95,8 +95,9 @@ class Partner(models.Model):
         blank=True,
         help_text=_('Use this field to send a customized message in the MDN Confirmations for this Partner')
     )
-    name = models.CharField(verbose_name=_('Partner Name'), max_length=100, primary_key=True)
-    as2_name = models.CharField(verbose_name=_('AS2 Identifier'), max_length=100)
+    name = models.CharField(verbose_name=_('Partner Name'), max_length=100, unique=True)
+    as2_name = models.CharField(verbose_name=_('AS2 Name'), max_length=100, primary_key=True)
+    as2_identifier = models.CharField(verbose_name=_('AS2 Identifier'), max_length=100)
     email_address = models.EmailField(null=True, blank=True)
     http_auth = models.BooleanField(verbose_name=_('Enable Authentication'), default=False)
     http_auth_user = models.CharField(max_length=100, null=True, blank=True)
@@ -145,6 +146,14 @@ class Partner(models.Model):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        """
+        Make sure as2_name field is set prior to saving.
+        """
+        if not self.as2_name:
+            self.as2_name = self.name
+        super(Partner, self).save(*args, **kwargs)
 
     def extra_headers_as_dict(self):
         if self.extra_headers:
@@ -249,9 +258,9 @@ def check_odirs(sender, instance, created, **kwargs):
     partners = Partner.objects.all()
     for partner in partners:
         as2utils.dirshouldbethere(
-            as2utils.join(pyas2init.gsettings['root_dir'], 'messages', instance.as2_name, 'inbox', partner.as2_name))
+            as2utils.join(pyas2init.gsettings['root_dir'], 'messages', instance.as2_name, 'inbox', partner.as2_identifier))
         as2utils.dirshouldbethere(
-            as2utils.join(pyas2init.gsettings['root_dir'], 'messages', partner.as2_name, 'outbox', instance.as2_name))
+            as2utils.join(pyas2init.gsettings['root_dir'], 'messages', partner.as2_identifier, 'outbox', instance.as2_name))
 
 
 @receiver(post_save, sender=Partner)
@@ -270,8 +279,8 @@ def update_dirs():
     for partner in partners:
         for org in orgs:
             as2utils.dirshouldbethere(
-                as2utils.join(pyas2init.gsettings['root_dir'], 'messages', org.as2_name, 'inbox', partner.as2_name))
+                as2utils.join(pyas2init.gsettings['root_dir'], 'messages', org.as2_name, 'inbox', partner.as2_identifier))
     for org in orgs:
         for partner in partners:
             as2utils.dirshouldbethere(
-                as2utils.join(pyas2init.gsettings['root_dir'], 'messages', partner.as2_name, 'outbox', org.as2_name))
+                as2utils.join(pyas2init.gsettings['root_dir'], 'messages', partner.as2_identifier, 'outbox', org.as2_name))

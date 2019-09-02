@@ -274,7 +274,7 @@ def resend_message(request, pk, *args, **kwargs):
         managepy_path,
         'sendas2message',
         orig_message.organization.as2_name,
-        orig_message.partner.as2_name,
+        orig_message.partner.as2_identifier,
         temp.name
     ]
     pyas2init.logger.info(_(u'Re-send message started with parameters: "%(parameters)s"'), {'parameters': str(lijst)})
@@ -489,7 +489,7 @@ def as2receive(request, *args, **kwargs):
                                                'messages',
                                                message.organization.as2_name,
                                                'inbox',
-                                               message.partner.as2_name)
+                                               message.partner.as2_identifier)
 
                     # Get the filename from the header and if not there set to message id
                     if message.partner.keep_filename and payload.get_filename():
