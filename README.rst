@@ -91,6 +91,6 @@ GNU GENERAL PUBLIC LICENSE
 
 .. _`RFC 4130`: https://www.ietf.org/rfc/rfc4130.txt
 .. _`documentation`: http://pyas2.readthedocs.org
-.. _`the repository`: http://github.com/mjun/pyas2
-.. _AUTHORS: https://github.com/mjun/pyas2/blob/master/AUTHORS.rst
-.. _`issue tracker`: https://github.com/mjun/pyas2/issues
+.. _`the repository`: http://github.com/martifarm/pyas2
+.. _AUTHORS: https://github.com/martifarm/pyas2/blob/master/AUTHORS.rst
+.. _`issue tracker`: https://github.com/martifarm/pyas2/issues
