@@ -14,11 +14,11 @@ import sys
 
 class Command(BaseCommand):
     help = _(u'Send an as2 message to your trading partner')
-    args = '<organization_as2name partner_as2name path_to_payload>'
+    args = '<organization partner path_to_payload>'
 
     def add_arguments(self, parser):
-        parser.add_argument('organization_as2name', type=str)
-        parser.add_argument('partner_as2name', type=str)
+        parser.add_argument('organization', type=str)
+        parser.add_argument('partner', type=str)
         parser.add_argument('path_to_payload', type=str)
 
         parser.add_argument(
@@ -32,13 +32,13 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # Check if organization and partner exists
         try:
-            org = models.Organization.objects.get(as2_name=options['organization_as2name'])
+            org = models.Organization.objects.get(name=options['organization'])
         except models.Organization.DoesNotExist:
-            raise CommandError(_(u'Organization "%s" does not exist' % options['organization_as2name']))
+            raise CommandError(_(u'Organization "%s" does not exist' % options['organization']))
         try:
-            partner = models.Partner.objects.get(as2_name=options['partner_as2name'])
+            partner = models.Partner.objects.get(name=options['partner'])
         except models.Partner.DoesNotExist:
-            raise CommandError(_(u'Partner "%s" does not exist' % options['partner_as2name']))
+            raise CommandError(_(u'Partner "%s" does not exist' % options['partner']))
 
         # Check if file exists and we have the right permissions
         if not os.path.isfile(options['path_to_payload']):

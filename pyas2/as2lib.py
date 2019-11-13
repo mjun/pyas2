@@ -60,9 +60,11 @@ def save_message(message, payload, raw_payload):
         message.organization = models.Organization.objects.get(
             as2_name=as2utils.unescape_as2name(payload.get('as2-to')))
 
-        if not models.Partner.objects.filter(as2_name=as2utils.unescape_as2name(payload.get('as2-from'))).exists():
+        partner = get_partner_from_payload(payload)
+        if not partner:
             raise as2utils.As2PartnerNotFound('Unknown AS2 Trading partner with id %s' % payload.get('as2-from'))
-        message.partner = models.Partner.objects.get(as2_name=as2utils.unescape_as2name(payload.get('as2-from')))
+
+        message.partner = partner
         models.Log.objects.create(
             message=message,
             status='S',
@@ -73,7 +75,7 @@ def save_message(message, payload, raw_payload):
         if message.partner.encryption and payload.get_content_type() != 'application/pkcs7-mime':
             raise as2utils.As2InsufficientSecurity(
                 u'Incoming messages from AS2 partner {0:s} are defined to be encrypted'.format(
-                    message.partner.as2_name))
+                    message.partner.as2_identifier))
 
         # Check if payload is encrypted and if so decrypt it
         if payload.get_content_type() == 'application/pkcs7-mime' \
@@ -118,7 +120,7 @@ def save_message(message, payload, raw_payload):
         # Check if message from this partner are expected to be signed
         if message.partner.signature and payload.get_content_type() != 'multipart/signed':
             raise as2utils.As2InsufficientSecurity(
-                u'Incoming messages from AS2 partner {0:s} are defined to be signed'.format(message.partner.as2_name))
+                u'Incoming messages from AS2 partner {0:s} are defined to be signed'.format(message.partner.as2_identifier))
 
         # Check if message is signed and if so verify it
         if payload.get_content_type() == 'multipart/signed':
@@ -352,7 +354,7 @@ def build_message(message):
         'MIME-Version': '1.0',
         'Message-ID': '<%s>' % message.message_id,
         'AS2-From': as2utils.escape_as2name(message.organization.as2_name),
-        'AS2-To': as2utils.escape_as2name(message.partner.as2_name),
+        'AS2-To': as2utils.escape_as2name(message.partner.as2_identifier),
         'Subject': message.partner.subject,
         'Date': email_datetime,
         'recipient-address': message.partner.target_url,
@@ -647,7 +649,7 @@ def run_post_send(message):
         variables = {
             'filename': message.payload.name,
             'sender': message.organization.as2_name,
-            'recevier': message.partner.as2_name,
+            'recevier': message.partner.as2_identifier,
             'messageid': message.message_id
         }
         variables.update(dict(HeaderParser().parsestr(message.headers).items()))
@@ -668,10 +670,52 @@ def run_post_receive(message, full_filename):
             'filename': message.payload.name,
             'fullfilename': full_filename,
             'sender': message.organization.as2_name,
-            'recevier': message.partner.as2_name,
+            'recevier': message.partner.as2_identifier,
             'messageid': message.message_id
         }
         variables.update(dict(HeaderParser().parsestr(message.headers).items()))
 
         # Execute the command
         os.system(command.safe_substitute(variables))
+
+
+def get_partner_from_payload(payload):
+    message_partner_as2name = as2utils.unescape_as2name(payload.get('as2-from'))
+    partners = models.Partner.objects.filter(as2_identifier=message_partner_as2name)
+
+    # We got a single partner so just return it
+    if partners.count() == 1:
+        return partners[0]
+
+    # We got multiple entries for given as2_name, determine which one to use
+    # by partner's extra_headers
+    elif partners.count() > 1:
+        for partner in partners:
+            partner_headers = partner.extra_headers_as_dict()
+            payload_headers = {}
+
+            # Collect header data
+            for partner_header in partner_headers:
+                payload_header_value = payload.get(partner_header)
+                if payload_header_value:
+                    payload_headers[partner_header] = payload_header_value
+
+            # Compare payload header and partner header data
+            if dict_contents_equals(partner_headers, payload_headers):
+                return partner
+
+
+def dict_contents_equals(d1, d2):
+    """
+    Case-insensitively compare two dicts.
+    """
+    for k1, v1 in d1.iteritems():
+        for k2, v2 in d2.iteritems():
+            if k1.lower() == k2.lower():
+                if type(v1) != type(v2):
+                    return False
+                if isinstance(v1, basestring) and v1.lower() != v2.lower():
+                    return False
+                if v1 != v2:
+                    return False
+    return True

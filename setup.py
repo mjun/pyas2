@@ -17,7 +17,7 @@ setup(
     description='A pythonic AS2 application for file tranfers.',
     long_description=README,
     url='http://pyas2.readthedocs.org/en/latest/',
-    download_url='https://github.com/mjun/pyas2/archive/master.zip',
+    download_url='https://github.com/martifarm/pyas2/archive/master.zip',
     author='Abhishek Ram',
     author_email='abhishek8816@gmail.com',
     classifiers=[

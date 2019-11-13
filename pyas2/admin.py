@@ -29,13 +29,13 @@ class PublicCertificateAdmin(admin.ModelAdmin):
 
 class PartnerAdmin(admin.ModelAdmin):
     form = forms.PartnerForm
-    list_display = ['name', 'as2_name', 'target_url', 'encryption', 'encryption_key', 'signature', 'signature_key',
+    list_display = ['name', 'as2_identifier', 'target_url', 'encryption', 'encryption_key', 'signature', 'signature_key',
                     'mdn', 'mdn_mode']
-    list_filter = ('name', 'as2_name')
+    list_filter = ('name', 'as2_identifier')
     fieldsets = (
         (None, {
             'fields': (
-                'name', 'as2_name', 'email_address', 'target_url', 'subject', 'content_type', 'confirmation_message')
+                'name', 'as2_identifier', 'email_address', 'target_url', 'subject', 'content_type', 'confirmation_message')
         }),
         ('Http Authentication', {
             'classes': ('collapse', 'wide'),
