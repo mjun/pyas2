@@ -302,7 +302,7 @@ def build_mdn(message, status, **kwargs):
             mdn_headers += '%s: %s\n' % (key, mdn_message[key])
 
         # Add partner's extra headers
-        if message.partner.extra_headers:
+        if message.partner and message.partner.extra_headers:
             message.headers += message.partner.extra_headers
 
         # Is Async mdn is requested mark MDN as pending and return None
