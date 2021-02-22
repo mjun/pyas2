@@ -35,7 +35,7 @@ def decompress_message(message, payload):
             decompressed_content = as2utils.decompress_payload(
                 compressed_content)
 
-        except Exception, e:
+        except Exception as e:
             raise as2utils.As2DecompressionFailed(
                 'Failed to decompress message,exception message is %s' % e)
 
@@ -108,7 +108,7 @@ def save_message(message, payload, raw_payload):
                     payload.set_type('application/edi-consent')
                     if filename:
                         payload.add_header('Content-Disposition', 'attachment', filename=filename)
-            except Exception, msg:
+            except Exception as msg:
                 raise as2utils.As2DecryptionFailed('Failed to decrypt message, exception message is %s' % msg)
 
         # Check for compression before signature check
@@ -142,8 +142,7 @@ def save_message(message, payload, raw_payload):
             # Extract the signature and signed content from the mime message
             main_boundary = '--' + payload.get_boundary()
             for part in payload.walk():
-                if part.get_content_type() in ["application/pkcs7-signature",
-                                               "application/x-pkcs7-signature"]:
+                if part.get_content_type() in ["application/pkcs7-signature", "application/x-pkcs7-signature"]:
                     __, raw_sig = as2utils.check_binary_sig(part, main_boundary, raw_payload)
                 else:
                     payload = part
@@ -155,7 +154,7 @@ def save_message(message, payload, raw_payload):
                 # Verify message using extracted signature and canonicalzed message
                 try:
                     as2utils.verify_payload(as2utils.canonicalize2(payload), raw_sig, cert, ca_cert, verify_cert)
-                except Exception, e:
+                except Exception as e:
                     raise as2utils.As2InvalidSignature(
                         'Signature Verification Failed, exception message is {0:s}'.format(e))
 
@@ -168,7 +167,7 @@ def save_message(message, payload, raw_payload):
 
         # Saving the message mic for sending it in the MDN
         if mic_content:
-            pyas2init.logger.debug("Calculating MIC with alg {0:s} for content:\n{1:s}".format(mic_alg, mic_content))
+            pyas2init.logger.debug("Calculating MIC with alg {0} for content:\n{1}".format(str(mic_alg), str(mic_content)))
             calculate_mic = getattr(hashlib, mic_alg.replace('-', ''), hashlib.sha1)
             message.mic = '%s, %s' % (calculate_mic(mic_content).digest().encode('base64').strip(), mic_alg)
 
@@ -341,13 +340,13 @@ def build_message(message):
 
     # Initialize the variables
     mic_content, mic_alg = None, None
-    payload = email.Message.Message()
+    payload = email.message.Message()
 
     # Build the As2 message headers as per specifications
     models.Log.objects.create(message=message,
                               status='S',
                               text=_(u'Build the AS2 message and header to send to the partner'))
-    email_datetime = email.Utils.formatdate(localtime=True)
+    email_datetime = email.utils.formatdate(localtime=True)
     as2_header = {
         'AS2-Version': '1.2',
         'ediint-features': 'CEM',
@@ -360,7 +359,6 @@ def build_message(message):
         'recipient-address': message.partner.target_url,
         'user-agent': 'PYAS2, A pythonic AS2 server'
     }
-
     # Create the payload message and add the data to be transferred as its contents
     with open(message.payload.file, 'rb') as fh:
         as2_content = fh.read()
@@ -373,7 +371,7 @@ def build_message(message):
     if message.partner.compress:
         models.Log.objects.create(message=message, status='S', text=_(u'Compressing the payload.'))
         message.compressed = True
-        compressed_message = email.Message.Message()
+        compressed_message = email.message.Message()
         compressed_message.set_type('application/pkcs7-mime')
         compressed_message.set_param('name', 'smime.p7z')
         compressed_message.set_param('smime-type', 'compressed-data')
@@ -482,7 +480,7 @@ def send_message(message, payload):
                                      headers=dict(message_header.items()),
                                      data=payload)
             response.raise_for_status()
-        except Exception, e:
+        except Exception as e:
             # Send mail here
             as2utils.senderrorreport(message, _(u'Failure during transmission of message to partner with error '
                                                 u'"%s".\n\nTo retry transmission run the management '
@@ -575,7 +573,7 @@ def save_mdn(message, mdn_content):
             # Verify the signature using raw MDN content
             try:
                 as2utils.verify_payload(mdn_content, None, cert, ca_cert, verify_cert)
-            except Exception, e:
+            except Exception as e:
                 raise as2utils.As2Exception(_(u'MDN Signature Verification Error, exception message is %s' % e))
 
         # Save the MDN to the store
@@ -709,8 +707,8 @@ def dict_contents_equals(d1, d2):
     """
     Case-insensitively compare two dicts.
     """
-    for k1, v1 in d1.iteritems():
-        for k2, v2 in d2.iteritems():
+    for k1, v1 in d1.items():
+        for k2, v2 in d2.items():
             if k1.lower() == k2.lower():
                 if type(v1) != type(v2):
                     return False

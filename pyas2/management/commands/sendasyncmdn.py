@@ -43,7 +43,7 @@ class Command(BaseCommand):
                 models.Log.objects.create(message=pending_mdn.omessage,
                                           status='S',
                                           text=_(u'Successfully sent asynchronous mdn to partner'))
-            except Exception, e:
+            except Exception as e:
                 models.Log.objects.create(message=pending_mdn.omessage,
                                           status='E',
                                           text=_(

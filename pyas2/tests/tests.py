@@ -4,7 +4,7 @@ from pyas2 import as2lib
 from email import utils as emailutils
 from email.parser import HeaderParser
 from email import message_from_string
-from itertools import izip
+from compat import izip
 import os
 
 TEST_DIR = os.path.join((os.path.dirname(
@@ -590,7 +590,7 @@ class AS2SendReceiveTest(TestCase):
             with open(filename2, "rtU") as b:
                 # Note that "all" and "izip" are lazy
                 # (will stop at the first line that's not identical)
-                return all(lineA == lineB for lineA, lineB in izip(a.xreadlines(), b.xreadlines()))
+                return all(lineA == lineB for lineA, lineB in izip(a, b))
 
 
 class AS2SterlingIntegratorTest(TestCase):

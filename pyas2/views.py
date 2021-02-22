@@ -9,6 +9,9 @@ from django.contrib import messages
 from django.core.mail import mail_managers
 from django import template
 from email.parser import HeaderParser
+
+from six import ensure_str
+from compat import email_message_from_str
 from pyas2 import models
 from pyas2 import forms
 from pyas2 import as2lib
@@ -375,10 +378,10 @@ def as2receive(request, *args, **kwargs):
     """
     if request.method == 'POST':
         # Create separate raw_payload with only message-id and content type
-        # as M2Crypto's signatur verification method does not like many headers
+        # as M2Crypto's signature verification method does not like many headers
         raw_payload = '%s: %s\n' % ('message-id', request.META['HTTP_MESSAGE_ID'])
         raw_payload += '%s: %s\n\n' % ('content-type', request.META['CONTENT_TYPE'])
-        raw_payload += request.body
+        raw_payload += ensure_str(request.body)
 
         # Extract all the relevant headers from the http request
         as2headers = ''
@@ -387,14 +390,14 @@ def as2receive(request, *args, **kwargs):
                 h_key = key.replace("HTTP_", "").replace("_", "-").lower()
                 as2headers += '%s: %s\n' % (h_key, request.META[key])
 
-        request_content = as2headers.encode('utf-8') + '\n'.encode('utf-8') +request.body
+        request_content = as2headers.encode('utf-8') + '\n'.encode('utf-8') + request.body
         pyas2init.logger.debug('Recevied an HTTP POST from %s with payload :\n%s' %
                                (request.META['REMOTE_ADDR'], request_content))
         try:
             pyas2init.logger.debug(
                 'Check payload to see if its an AS2 Message or ASYNC MDN.')
             # Load the request header and body as a MIME Email Message
-            payload = email.message_from_string(request_content)
+            payload = email_message_from_str(request_content)
 
             # Get the message sender and receiver AS2 identifiers
             message_org_as2name = as2utils.unescape_as2name(payload.get('as2-to'))
@@ -437,7 +440,7 @@ def as2receive(request, *args, **kwargs):
                                            'Either the partner, org or message was not found in the system' % msg_id)
                     return HttpResponseServerError(_(u'Unknown AS2 MDN received. Will not be processed'))
 
-                except Exception, e:
+                except Exception as e:
                     message.status = 'E'
                     message.adv_status = _(u'Failed to send message, error is:\n %s' %
                                            traceback.format_exc(None).decode('utf-8', 'ignore'))
@@ -518,32 +521,32 @@ def as2receive(request, *args, **kwargs):
                     message.save()
 
                 # Catch each of the possible exceptions while processing an as2 message
-                except as2utils.As2DuplicateDocument, e:
+                except as2utils.As2DuplicateDocument as e:
                     status = 'warning'
                     adv_status = 'duplicate-document'
                     status_message = _(u'An error occurred during the AS2 message processing: %s' % e)
 
-                except as2utils.As2PartnerNotFound, e:
+                except as2utils.As2PartnerNotFound as e:
                     status = 'error'
                     adv_status = 'unknown-trading-partner'
                     status_message = _(u'An error occurred during the AS2 message processing: %s' % e)
 
-                except as2utils.As2InsufficientSecurity, e:
+                except as2utils.As2InsufficientSecurity as e:
                     status = 'error'
                     adv_status = 'insufficient-message-security'
                     status_message = _(u'An error occurred during the AS2 message processing: %s' % e)
 
-                except as2utils.As2DecryptionFailed, e:
+                except as2utils.As2DecryptionFailed as e:
                     status = 'decryption-failed'
                     adv_status = 'error'
                     status_message = _(u'An error occurred during the AS2 message processing: %s' % e)
 
-                except as2utils.As2DecompressionFailed, e:
+                except as2utils.As2DecompressionFailed as e:
                     status = 'error'
                     adv_status = 'decompression-failed'
                     status_message = _(u'An error occurred during the AS2 message processing: %s' % e)
 
-                except as2utils.As2InvalidSignature, e:
+                except as2utils.As2InvalidSignature as e:
                     status = 'error'
                     adv_status = 'integrity-check-failed'
                     status_message = _(u'An error occurred during the AS2 message processing: %s' % e)
@@ -574,7 +577,7 @@ def as2receive(request, *args, **kwargs):
 
         # Catch all exception in case of any kind of error in the system.
         except Exception:
-            txt = traceback.format_exc(None).decode('utf-8', 'ignore')
+            txt = ensure_str(traceback.format_exc(None))
             report_txt = _(u'Fatal error while processing message %(msg)s, '
                            u'error:\n%(txt)s') % {'txt': txt, 'msg': request.META.get('HTTP_MESSAGE_ID').strip('<>')}
             pyas2init.logger.error(report_txt)

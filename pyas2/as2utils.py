@@ -10,8 +10,8 @@ from django.utils.translation import ugettext as _
 from pyasn1.type import univ, namedtype, tag
 from pyasn1.codec.ber import encoder, decoder
 from M2Crypto import BIO, SMIME, X509
-from cStringIO import StringIO
 from email.generator import Generator
+from compat import StringIO
 
 key_pass = ''
 
