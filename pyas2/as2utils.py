@@ -10,8 +10,7 @@ from django.utils.translation import ugettext as _
 from pyasn1.type import univ, namedtype, tag
 from pyasn1.codec.ber import encoder, decoder
 from M2Crypto import BIO, SMIME, X509
-from email.generator import Generator
-from compat import StringIO
+from compat import StringIO, Generator, unicode_type, ensure_str, ensure_binary, email_msg_from_value, compress_hexify
 
 key_pass = ''
 
@@ -99,8 +98,8 @@ class AS2Error(Exception):
                 xxx = {}
         else:
             xxx = kwargs
-        self.xxx = collections.defaultdict(unicode)     # catch-all if var in string is not there
-        for key, value in xxx.iteritems():
+        self.xxx = collections.defaultdict(unicode_type)     # catch-all if var in string is not there
+        for key, value in xxx.items():
             self.xxx[safe_unicode(key)] = safe_unicode(value)
 
     def __unicode__(self):
@@ -189,7 +188,7 @@ def storefile(targetdir, filename, content, archive):
         filename = os.path.splitext(filename)[0] + time.strftime('_%H%M%S') + os.path.splitext(filename)[1]
     absfilename = join(targetdir, filename)
     sfile = open(absfilename, 'wb')
-    sfile.write(content)
+    sfile.write(ensure_binary(content))
     sfile.close()
     return absfilename
  
@@ -210,10 +209,11 @@ def escape_as2name(uename):
 
 
 def extractpayload(message, **kwargs):
+    from compat import write_log
     if message.is_multipart():
         headerlen = kwargs.get('headerlen', 78)
         messagestr = mimetostring(message, headerlen)  # .replace('\n','\r\n')
-        boundary = '--' + message.get_boundary()
+        boundary = b'--' + message.get_boundary().encode('utf-8')
         temp = messagestr.split(boundary)
         temp.pop(0)
         return boundary + boundary.join(temp)
@@ -248,7 +248,9 @@ def canonicalize2(msg):
 
 
 def canonicalize(msg):
-    return msg.replace('\r\n', '\n').replace('\r', '\n').replace('\n', '\r\n')
+    if isinstance(msg, (bytes, bytearray)):
+        msg = msg.decode('utf-8')
+    return msg.replace('\r\n', '\n').replace('\r', '\n').replace('\n', '\r\n').encode('utf-8')
 
 # **********************************************************/**
 # *************************Smime Functions such as compress, encrypt..***********************/**
@@ -300,7 +302,7 @@ def compress_payload(payload):
     cdata_payload = CompressedDataPayload()
     cdata_payload.setComponentByName('content-type', (1, 2, 840, 113549, 1, 7, 1))
     cdata_payload.setComponentByName('content',
-                                     Content(univ.OctetString(hexValue=zlib.compress(payload).encode('hex'))))
+                                     Content(univ.OctetString(hexValue=compress_hexify(payload))))
     cdata = CompressedData()
     cdata.setComponentByName('version', 0)
     cdata.setComponentByName('attributes', cdata_attr)
@@ -308,7 +310,7 @@ def compress_payload(payload):
     cdata_main = CompressedDataMain()
     cdata_main.setComponentByName('id-ct-compressedData', (1, 2, 840, 113549, 1, 9, 16, 1, 9))
     cdata_main.setComponentByName('compressedData', cdata)
-    return encoder.encode(cdata_main, defMode=False).encode('base64')
+    return codecs.encode(encoder.encode(cdata_main, defMode=False), 'base64')
 
 
 def decompress_payload(payload):
@@ -325,10 +327,10 @@ def encrypt_payload(payload, key, cipher):
     certificate.push(X509.load_cert(key))
     encrypter.set_x509_stack(certificate)
     encrypter.set_cipher(SMIME.Cipher(cipher))
-    encrypted_content = encrypter.encrypt(BIO.MemoryBuffer(payload), SMIME.PKCS7_BINARY)
+    encrypted_content = encrypter.encrypt(BIO.MemoryBuffer(ensure_binary(payload)), SMIME.PKCS7_BINARY)
     out = BIO.MemoryBuffer()
     encrypter.write(out, encrypted_content)
-    return email.message_from_string(out.read())
+    return email_msg_from_value(out.read())
 
 
 def decrypt_payload(payload, key, passphrase):
@@ -337,7 +339,7 @@ def decrypt_payload(payload, key, passphrase):
     privkey = SMIME.SMIME()
     privkey.load_key(key, callback=get_key_passphrase)
     # Load the encrypted data.
-    p7, data = SMIME.smime_load_pkcs7_bio(BIO.MemoryBuffer(payload))
+    p7, data = SMIME.smime_load_pkcs7_bio(BIO.MemoryBuffer(ensure_binary(payload)))
     return privkey.decrypt(p7)
 
 
@@ -345,7 +347,9 @@ def sign_payload(data, key, passphrase):
     global key_pass
     key_pass = passphrase
     mic_alg, signature = None, None
-
+    data = ensure_binary(data)
+    from compat import write_log
+    write_log(type(data))
     # Sign the message with the key provided
     signer = SMIME.SMIME()
     signer.load_key(key, callback=get_key_passphrase)
@@ -355,7 +359,7 @@ def sign_payload(data, key, passphrase):
     signer.write(out, sign, buf)
 
     # Get the micalg from the signed message
-    signed_message = email.message_from_string(out.read())
+    signed_message = email_msg_from_value(out.read())
     mic_alg = signed_message.get_param('micalg')
 
     # Extract the raw signature from the signed message
@@ -383,7 +387,7 @@ def verify_payload(msg, raw_sig, cert, ca_cert, verify_cert):
         p7 = SMIME.load_pkcs7_bio(BIO.MemoryBuffer(sig))
         data_bio = BIO.MemoryBuffer(msg)
     else:
-        p7, data_bio = SMIME.smime_load_pkcs7_bio(BIO.MemoryBuffer(msg))
+        p7, data_bio = SMIME.smime_load_pkcs7_bio(BIO.MemoryBuffer(ensure_binary(msg)))
 
     # Verify the signature against the message
     if verify_cert:
@@ -394,21 +398,21 @@ def verify_payload(msg, raw_sig, cert, ca_cert, verify_cert):
 
 
 def get_key_passphrase(self):
-    return key_pass
+    return ensure_binary(key_pass)
 
 
 def check_binary_sig(signature, boundary, content):
     """ Function checks for binary signature and replaces with base64"""
     # Check if the signature is base64 or not
     try:
-        raw_sig = signature.get_payload().encode('ascii').strip()
+        raw_sig = signature.get_payload().decode('ascii').encode('ascii').strip()
     except UnicodeDecodeError:
         # If not decode to base64 and replace in raw message
         raw_sig = signature.get_payload().encode('base64').strip()
 
     signature.set_payload(raw_sig)
-    content_pts = content.split(boundary)
-    content_pts[-2] = '\r\n%s\r\n' % mimetostring(signature, 78)
+    content_pts = ensure_str(content).split(boundary)
+    content_pts[-2] = '\r\n%s\r\n' % ensure_str(mimetostring(signature, 78))
     content = boundary.join(content_pts)
 
     # return the contents and raw signature

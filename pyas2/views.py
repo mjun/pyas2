@@ -10,8 +10,8 @@ from django.core.mail import mail_managers
 from django import template
 from email.parser import HeaderParser
 
-from six import ensure_str
-from compat import email_message_from_str
+from six import ensure_str, ensure_binary
+from compat import email_msg_from_value
 from pyas2 import models
 from pyas2 import forms
 from pyas2 import as2lib
@@ -378,10 +378,10 @@ def as2receive(request, *args, **kwargs):
     """
     if request.method == 'POST':
         # Create separate raw_payload with only message-id and content type
-        # as M2Crypto's signature verification method does not like many headers
-        raw_payload = '%s: %s\n' % ('message-id', request.META['HTTP_MESSAGE_ID'])
-        raw_payload += '%s: %s\n\n' % ('content-type', request.META['CONTENT_TYPE'])
-        raw_payload += ensure_str(request.body)
+        # as M2Crypto's signatur verification method does not like many headers
+        raw_payload = ensure_binary('%s: %s\n' % ('message-id', request.META['HTTP_MESSAGE_ID']))
+        raw_payload += ensure_binary('%s: %s\n\n' % ('content-type', request.META['CONTENT_TYPE']))
+        raw_payload += request.body
 
         # Extract all the relevant headers from the http request
         as2headers = ''
@@ -390,14 +390,14 @@ def as2receive(request, *args, **kwargs):
                 h_key = key.replace("HTTP_", "").replace("_", "-").lower()
                 as2headers += '%s: %s\n' % (h_key, request.META[key])
 
-        request_content = as2headers.encode('utf-8') + '\n'.encode('utf-8') + request.body
+        request_content = as2headers.encode('utf-8') + '\n'.encode('utf-8') +request.body
         pyas2init.logger.debug('Recevied an HTTP POST from %s with payload :\n%s' %
                                (request.META['REMOTE_ADDR'], request_content))
         try:
             pyas2init.logger.debug(
                 'Check payload to see if its an AS2 Message or ASYNC MDN.')
             # Load the request header and body as a MIME Email Message
-            payload = email_message_from_str(request_content)
+            payload = email_msg_from_value(request_content)
 
             # Get the message sender and receiver AS2 identifiers
             message_org_as2name = as2utils.unescape_as2name(payload.get('as2-to'))

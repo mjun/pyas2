@@ -1,12 +1,19 @@
+from codecs import encode
+
 import requests
 import email
 import hashlib
+
+from six import ensure_str
+
 import as2utils
 import os
 import base64
 from django.utils.translation import ugettext as _
 from email.mime.multipart import MIMEMultipart
 from email.parser import HeaderParser
+
+from compat import email_msg_from_value, ensure_binary
 from pyas2 import models
 from pyas2 import pyas2init
 from string import Template
@@ -81,14 +88,14 @@ def save_message(message, payload, raw_payload):
         if payload.get_content_type() == 'application/pkcs7-mime' \
                 and payload.get_param('smime-type') == 'enveloped-data':
             models.Log.objects.create(message=message, status='S', text=_(
-                u'Decrypting the payload using private key {0:s}'.format(message.organization.encryption_key)))
+                u'Decrypting the payload using private key {0}'.format(str(message.organization.encryption_key))))
             message.encrypted = True
 
             # Check if encrypted data is base64 encoded, if not then encode
             try:
-                payload.get_payload().encode('ascii')
+                payload.get_payload(decode=True).decode('ascii').encode('ascii')
             except UnicodeDecodeError:
-                payload.set_payload(payload.get_payload().encode('base64'))
+                payload.set_payload(encode(payload.get_payload(decode=True), 'base64'))
 
             # Decrypt the base64 encoded data using the partners public key
             pyas2init.logger.debug(u'Decrypting the payload :\n{0:s}'.format(payload.get_payload()))
@@ -99,7 +106,7 @@ def save_message(message, payload, raw_payload):
                     str(message.organization.encryption_key.certificate_passphrase)
                 )
                 raw_payload = decrypted_content
-                payload = email.message_from_string(decrypted_content)
+                payload = email_msg_from_value(decrypted_content)
 
                 # Check if decrypted content is the actual content i.e. no compression and no signatures
                 if payload.get_content_type() == 'text/plain':
@@ -127,8 +134,8 @@ def save_message(message, payload, raw_payload):
             if not message.partner.signature_key:
                 raise as2utils.As2InsufficientSecurity('Partner has no signature verification key defined')
             models.Log.objects.create(message=message, status='S', text=_(
-                u'Message is signed, Verifying it using public key {0:s}'.format(message.partner.signature_key)))
-            pyas2init.logger.debug('Verifying the signed payload:\n{0:s}'.format(payload.as_string()))
+                u'Message is signed, Verifying it using public key {0}'.format(str(message.partner.signature_key))))
+            pyas2init.logger.debug('Verifying the signed payload:\n{0}'.format(str(payload.as_string())))
             message.signed = True
             mic_alg = payload.get_param('micalg').lower() or 'sha1'
 
@@ -142,7 +149,8 @@ def save_message(message, payload, raw_payload):
             # Extract the signature and signed content from the mime message
             main_boundary = '--' + payload.get_boundary()
             for part in payload.walk():
-                if part.get_content_type() in ["application/pkcs7-signature", "application/x-pkcs7-signature"]:
+                if part.get_content_type() in ["application/pkcs7-signature",
+                                               "application/x-pkcs7-signature"]:
                     __, raw_sig = as2utils.check_binary_sig(part, main_boundary, raw_payload)
                 else:
                     payload = part
@@ -163,13 +171,13 @@ def save_message(message, payload, raw_payload):
         # Check if the message has been compressed and if so decompress it
         message, decompressed_content = decompress_message(message, payload)
         if decompressed_content:
-            payload = email.message_from_string(decompressed_content)
+            payload = email_msg_from_value(decompressed_content)
 
         # Saving the message mic for sending it in the MDN
         if mic_content:
             pyas2init.logger.debug("Calculating MIC with alg {0} for content:\n{1}".format(str(mic_alg), str(mic_content)))
             calculate_mic = getattr(hashlib, mic_alg.replace('-', ''), hashlib.sha1)
-            message.mic = '%s, %s' % (calculate_mic(mic_content).digest().encode('base64').strip(), mic_alg)
+            message.mic = '%s, %s' % (ensure_str(base64.b64encode(calculate_mic(mic_content.encode()).digest()).strip()), mic_alg)
 
         return payload
     finally:
@@ -222,7 +230,7 @@ def build_mdn(message, status, **kwargs):
         mdn_report = MIMEMultipart('report', report_type="disposition-notification")
 
         # Build the text message with confirmation text and add to report
-        mdn_text = email.Message.Message()
+        mdn_text = email.message.Message()
         mdn_text.set_payload("%s\n" % confirmation_text)
         mdn_text.set_type('text/plain')
         mdn_text.set_charset('us-ascii')
@@ -230,7 +238,7 @@ def build_mdn(message, status, **kwargs):
         mdn_report.attach(mdn_text)
 
         # Build the MDN message and add to report
-        mdn_base = email.Message.Message()
+        mdn_base = email.message.Message()
         mdn_base.set_type('message/disposition-notification')
         mdn_base.set_charset('us-ascii')
         mdn = 'Reporting-UA: Bots Opensource EDI Translator\n'
@@ -256,15 +264,15 @@ def build_mdn(message, status, **kwargs):
                 and message.organization.signature_key:
             models.Log.objects.create(message=message,
                                       status='S',
-                                      text=_(u'Signing the MDN using private key {0:s}'.format(
-                                          message.organization.signature_key)))
+                                      text=_(u'Signing the MDN using private key {0}'.format(
+                                          str(message.organization.signature_key))))
             mdn_signed = True
             # options = message_header.get('disposition-notification-options').split(";")
             # algorithm = options[1].split(",")[1].strip()
             signed_report = MIMEMultipart('signed', protocol="application/pkcs7-signature")
             signed_report.attach(mdn_report)
             mic_alg, signature = as2utils.sign_payload(
-                    as2utils.canonicalize(as2utils.mimetostring(mdn_report, 0)+'\n'),
+                    as2utils.canonicalize(as2utils.mimetostring(mdn_report, 0) + b'\n'),
                     str(message.organization.signature_key.certificate.path),
                     str(message.organization.signature_key.certificate_passphrase)
             )
@@ -278,16 +286,16 @@ def build_mdn(message, status, **kwargs):
         # Extract the MDN boy from the mdn message.
         # Add new line between the MDN message and the signature,
         # Found that without this MDN signature verification fails on Mendelson AS2
-        main_boundary = '--' + mdn_report.get_boundary() + '--'
+        main_boundary = ensure_binary('--' + mdn_report.get_boundary() + '--')
         mdn_body = as2utils.canonicalize(
-            as2utils.extractpayload(mdn_message).replace(main_boundary, main_boundary+'\n'))
+            as2utils.extractpayload(mdn_message).replace(main_boundary, main_boundary+b'\n'))
 
         # Add the relevant headers to the MDN message
         mdn_message.add_header('ediint-features', 'CEM')
         mdn_message.add_header('as2-from', message_header.get('as2-to'))
         mdn_message.add_header('as2-to', message_header.get('as2-from'))
         mdn_message.add_header('AS2-Version', '1.2')
-        mdn_message.add_header('date', email.Utils.formatdate(localtime=True))
+        mdn_message.add_header('date', email.utils.formatdate(localtime=True))
         mdn_message.add_header('Message-ID', email.utils.make_msgid())
         mdn_message.add_header('user-agent', 'PYAS2, A pythonic AS2 server')
 
@@ -378,7 +386,7 @@ def build_message(message):
         compressed_message.add_header('Content-Transfer-Encoding', 'base64')
         compressed_message.add_header('Content-Disposition', 'attachment', filename='smime.p7z')
         compressed_message.set_payload(
-            as2utils.compress_payload(as2utils.canonicalize(as2utils.mimetostring(payload, 0))))
+            as2utils.compress_payload(as2utils.canonicalize(as2utils.mimetostring(payload, 0))).decode())
         as2_content, payload = compressed_message.get_payload(), compressed_message
         pyas2init.logger.debug('Compressed message %s payload as:\n%s' % (message.message_id, payload.as_string()))
 
@@ -386,8 +394,8 @@ def build_message(message):
     if message.partner.signature:
         models.Log.objects.create(message=message,
                                   status='S',
-                                  text=_(u'Signing the message using organization key {0:s}'.format(
-                                      message.organization.signature_key)))
+                                  text=_(u'Signing the message using organization key {0}'.format(
+                                      str(message.organization.signature_key))))
         message.signed = True
         signed_message = MIMEMultipart('signed', protocol="application/pkcs7-signature")
         del signed_message['MIME-Version']
@@ -407,14 +415,14 @@ def build_message(message):
     if message.partner.encryption:
         models.Log.objects.create(message=message,
                                   status='S',
-                                  text=_(u'Encrypting the message using partner key {0:s}'.format(
-                                      message.partner.encryption_key)))
+                                  text=_(u'Encrypting the message using partner key {0}'.format(
+                                      str(message.partner.encryption_key))))
         message.encrypted = True
         payload = as2utils.encrypt_payload(as2utils.canonicalize(as2utils.mimetostring(payload, 0)),
                                            message.partner.encryption_key.certificate.path,
                                            message.partner.encryption)
         payload.set_type('application/pkcs7-mime')
-        as2_content = payload.get_payload().decode('base64')
+        as2_content = base64.b64decode(ensure_binary(payload.get_payload()))
         del payload['Content-Transfer-Encoding']
         pyas2init.logger.debug('Encrypted message %s payload as:\n%s' % (message.message_id, payload.as_string()))
 
@@ -435,7 +443,7 @@ def build_message(message):
     if mic_content:
         pyas2init.logger.debug("Calculating MIC with alg %s for content:\n%s" % (mic_alg, mic_content))
         calculate_mic = getattr(hashlib, mic_alg.replace('-', ''), hashlib.sha1)
-        message.mic = calculate_mic(mic_content).digest().encode('base64').strip()
+        message.mic = ensure_str(base64.b64encode(calculate_mic(mic_content).digest()).strip())
 
     # Extract the As2 headers as a string and save it to the message object
     as2_header.update(payload.items())
@@ -528,7 +536,7 @@ def save_mdn(message, mdn_content):
 
     try:
         # Parse the raw mdn to an email.Message
-        mdn_message = email.message_from_string(mdn_content)
+        mdn_message = email_msg_from_value(mdn_content)
         mdn_headers = ''
         for key in mdn_message.keys():
             mdn_headers += '%s: %s\n' % (key, mdn_message[key])
@@ -549,8 +557,8 @@ def save_mdn(message, mdn_content):
             # Verify the signature in the MDN message
             models.Log.objects.create(message=message,
                                       status='S',
-                                      text=_(u'Verifying the signed MDN with partner key {0:s}'.format(
-                                          message.partner.signature_key)))
+                                      text=_(u'Verifying the signed MDN with partner key {0}'.format(
+                                          str(message.partner.signature_key))))
             mdn_signed = True
 
             # Get the partners public and ca certificates

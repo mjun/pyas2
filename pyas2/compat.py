@@ -15,7 +15,7 @@ else:
     izip = zip
     from io import BytesIO as StringIO
     from email.generator import BytesGenerator as Generator
-    from six import string_types, ensure_str
+    from six import string_types, ensure_str, ensure_binary
 
 
 def hexify(value):
@@ -28,7 +28,14 @@ def compress_hexify(value):
     return zlib.compress(value).encode("hex")
 
 
-def email_message_from_str(value):
+def email_msg_from_value(value):
     if six.PY3 and isinstance(value, (bytes, bytearray)):
         return email.message_from_bytes(value)
     return email.message_from_string(value)
+
+
+def write_log(message):
+    import csv
+    with open('LOGS.csv', mode='a') as document:
+        writer = csv.writer(document, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        writer.writerow([message])

@@ -4,7 +4,7 @@ from pyas2 import as2lib
 from email import utils as emailutils
 from email.parser import HeaderParser
 from email import message_from_string
-from compat import izip
+from compat import izip, ensure_str
 import os
 
 TEST_DIR = os.path.join((os.path.dirname(
@@ -575,7 +575,7 @@ class AS2SendReceiveTest(TestCase):
         mdn_content = ''
         for key in ['message-id', 'content-type', ]:
             mdn_content += '%s: %s\n' % (key, response[key])
-        mdn_content = '%s\n%s' % (mdn_content, response.content)
+        mdn_content = '%s\n%s' % (mdn_content, ensure_str(response.content))
         as2lib.save_mdn(out_message, mdn_content)
 
     @staticmethod
@@ -649,7 +649,7 @@ class AS2SterlingIntegratorTest(TestCase):
         )
 
     def test_process_message(self):
-        with open(os.path.join(TEST_DIR, 'si_signed_cmp.msg')) as msg:
+        with open(os.path.join(TEST_DIR, 'si_signed_cmp.msg'), 'rb') as msg:
             raw_payload = msg.read()
             payload = message_from_string(raw_payload)
             message = models.Message.objects.create(
@@ -666,5 +666,5 @@ class AS2SterlingIntegratorTest(TestCase):
             partner=self.partner, organization=self.organization,
             direction='OUT', status='IP', payload=self.payload)
 
-        with open(os.path.join(TEST_DIR, 'si_signed.mdn')) as mdn:
+        with open(os.path.join(TEST_DIR, 'si_signed.mdn'), 'rb') as mdn:
             as2lib.save_mdn(message, mdn.read())
