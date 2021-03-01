@@ -1,3 +1,4 @@
+import base64
 import re
 import os
 import email
@@ -405,10 +406,10 @@ def check_binary_sig(signature, boundary, content):
     """ Function checks for binary signature and replaces with base64"""
     # Check if the signature is base64 or not
     try:
-        raw_sig = signature.get_payload().decode('ascii').encode('ascii').strip()
+        raw_sig = ensure_binary(signature.get_payload()).decode('ascii').encode('ascii').strip()
     except UnicodeDecodeError:
         # If not decode to base64 and replace in raw message
-        raw_sig = signature.get_payload().encode('base64').strip()
+        raw_sig = base64.b64encode(ensure_binary(signature.get_payload())).strip()
 
     signature.set_payload(raw_sig)
     content_pts = ensure_str(content).split(boundary)

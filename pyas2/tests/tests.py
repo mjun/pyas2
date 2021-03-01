@@ -3,8 +3,7 @@ from pyas2 import models
 from pyas2 import as2lib
 from email import utils as emailutils
 from email.parser import HeaderParser
-from email import message_from_string
-from compat import izip, ensure_str
+from compat import izip, ensure_str, email_msg_from_value
 import os
 
 TEST_DIR = os.path.join((os.path.dirname(
@@ -651,7 +650,7 @@ class AS2SterlingIntegratorTest(TestCase):
     def test_process_message(self):
         with open(os.path.join(TEST_DIR, 'si_signed_cmp.msg'), 'rb') as msg:
             raw_payload = msg.read()
-            payload = message_from_string(raw_payload)
+            payload = email_msg_from_value(raw_payload)
             message = models.Message.objects.create(
                 message_id=payload.get('message-id').strip('<>'),
                 direction='IN',
