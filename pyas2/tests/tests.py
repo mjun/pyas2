@@ -3,7 +3,7 @@ from pyas2 import models
 from pyas2 import as2lib
 from email import utils as emailutils
 from email.parser import HeaderParser
-from compat import izip, ensure_str, email_msg_from_value
+from compat import izip, email_msg_from_value
 import os
 
 TEST_DIR = os.path.join((os.path.dirname(
@@ -574,7 +574,7 @@ class AS2SendReceiveTest(TestCase):
         mdn_content = ''
         for key in ['message-id', 'content-type', ]:
             mdn_content += '%s: %s\n' % (key, response[key])
-        mdn_content = '%s\n%s' % (mdn_content, ensure_str(response.content))
+        mdn_content = b'%s\n%s' % (mdn_content.encode('utf-8'), response.content)
         as2lib.save_mdn(out_message, mdn_content)
 
     @staticmethod

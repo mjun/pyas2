@@ -1,19 +1,14 @@
-from codecs import encode
-
 import requests
 import email
 import hashlib
-
-from six import ensure_str
-
 import as2utils
 import os
 import base64
 from django.utils.translation import ugettext as _
 from email.mime.multipart import MIMEMultipart
 from email.parser import HeaderParser
-
-from compat import email_msg_from_value, ensure_binary
+from codecs import encode
+from compat import email_msg_from_value, ensure_binary, ensure_str
 from pyas2 import models
 from pyas2 import pyas2init
 from string import Template
@@ -135,7 +130,7 @@ def save_message(message, payload, raw_payload):
                 raise as2utils.As2InsufficientSecurity('Partner has no signature verification key defined')
             models.Log.objects.create(message=message, status='S', text=_(
                 u'Message is signed, Verifying it using public key {0}'.format(str(message.partner.signature_key))))
-            pyas2init.logger.debug('Verifying the signed payload:\n{0}'.format(str(payload.as_string())))
+            pyas2init.logger.debug('Verifying the signed payload:\n{0}'.format(payload.as_string()))
             message.signed = True
             mic_alg = payload.get_param('micalg').lower() or 'sha1'
 
@@ -164,7 +159,7 @@ def save_message(message, payload, raw_payload):
                     as2utils.verify_payload(as2utils.canonicalize2(payload), raw_sig, cert, ca_cert, verify_cert)
                 except Exception as e:
                     raise as2utils.As2InvalidSignature(
-                        'Signature Verification Failed, exception message is {0:s}'.format(e))
+                        'Signature Verification Failed, exception message is {0}'.format(e))
 
             mic_content = as2utils.canonicalize2(payload)
 
@@ -177,7 +172,7 @@ def save_message(message, payload, raw_payload):
         if mic_content:
             pyas2init.logger.debug("Calculating MIC with alg {0} for content:\n{1}".format(str(mic_alg), str(mic_content)))
             calculate_mic = getattr(hashlib, mic_alg.replace('-', ''), hashlib.sha1)
-            message.mic = '%s, %s' % (ensure_str(base64.b64encode(calculate_mic(mic_content.encode()).digest()).strip()), mic_alg)
+            message.mic = '%s, %s' % (ensure_str(base64.b64encode(calculate_mic(mic_content).digest()).strip()), mic_alg)
 
         return payload
     finally:
@@ -386,7 +381,7 @@ def build_message(message):
         compressed_message.add_header('Content-Transfer-Encoding', 'base64')
         compressed_message.add_header('Content-Disposition', 'attachment', filename='smime.p7z')
         compressed_message.set_payload(
-            as2utils.compress_payload(as2utils.canonicalize(as2utils.mimetostring(payload, 0))).decode())
+            as2utils.compress_payload(as2utils.canonicalize(as2utils.mimetostring(payload, 0))))
         as2_content, payload = compressed_message.get_payload(), compressed_message
         pyas2init.logger.debug('Compressed message %s payload as:\n%s' % (message.message_id, payload.as_string()))
 

@@ -34,6 +34,12 @@ def email_msg_from_value(value):
     return email.message_from_string(value)
 
 
+def get_payload(email_msg):
+    if six.PY3:
+        return email_msg.as_bytes()
+    return email_msg.get_payload()
+
+
 def write_log(message):
     import csv
     with open('LOGS.csv', mode='a') as document:
