@@ -24,9 +24,9 @@ def decompress_message(message, payload):
         message.compressed = True
 
         # Decode the data to binary if its base64 encoded
-        compressed_content = payload.get_payload()
+        compressed_content = payload.get_payload(decode=True)
         try:
-            compressed_content.encode('ascii')
+            compressed_content.decode('ascii').encode('ascii')
             compressed_content = base64.b64decode(payload.get_payload())
         except UnicodeDecodeError:
             pass
@@ -76,7 +76,7 @@ def save_message(message, payload, raw_payload):
         # Check if message from this partner are expected to be encrypted
         if message.partner.encryption and payload.get_content_type() != 'application/pkcs7-mime':
             raise as2utils.As2InsufficientSecurity(
-                u'Incoming messages from AS2 partner {0:s} are defined to be encrypted'.format(
+                u'Incoming messages from AS2 partner {0} are defined to be encrypted'.format(
                     message.partner.as2_identifier))
 
         # Check if payload is encrypted and if so decrypt it
@@ -93,7 +93,7 @@ def save_message(message, payload, raw_payload):
                 payload.set_payload(encode(payload.get_payload(decode=True), 'base64'))
 
             # Decrypt the base64 encoded data using the partners public key
-            pyas2init.logger.debug(u'Decrypting the payload :\n{0:s}'.format(payload.get_payload()))
+            pyas2init.logger.debug(u'Decrypting the payload :\n{0}'.format(payload.get_payload()))
             try:
                 decrypted_content = as2utils.decrypt_payload(
                     as2utils.mimetostring(payload, 78),
@@ -122,7 +122,7 @@ def save_message(message, payload, raw_payload):
         # Check if message from this partner are expected to be signed
         if message.partner.signature and payload.get_content_type() != 'multipart/signed':
             raise as2utils.As2InsufficientSecurity(
-                u'Incoming messages from AS2 partner {0:s} are defined to be signed'.format(message.partner.as2_identifier))
+                u'Incoming messages from AS2 partner {0} are defined to be signed'.format(message.partner.as2_identifier))
 
         # Check if message is signed and if so verify it
         if payload.get_content_type() == 'multipart/signed':

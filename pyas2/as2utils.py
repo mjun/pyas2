@@ -11,7 +11,8 @@ from django.utils.translation import ugettext as _
 from pyasn1.type import univ, namedtype, tag
 from pyasn1.codec.ber import encoder, decoder
 from M2Crypto import BIO, SMIME, X509
-from compat import StringIO, Generator, unicode_type, ensure_binary, email_msg_from_value, compress_hexify
+from compat import StringIO, Generator, unicode_type, ensure_binary, \
+    email_msg_from_value, compress_hexify
 
 key_pass = ''
 
@@ -404,8 +405,9 @@ def check_binary_sig(signature, boundary, content):
         raw_sig = ensure_binary(signature.get_payload()).decode('ascii').encode('ascii').strip()
     except UnicodeDecodeError:
         # If not decode to base64 and replace in raw message
-        raw_sig = codecs.encode(signature.get_payload(decode=True), 'base64')
+        raw_sig = codecs.encode(signature.get_payload(decode=True), 'base64').strip()
 
+    # TODO: check if this is needed
     boundary = ensure_binary(boundary)
     content = ensure_binary(content)
 
