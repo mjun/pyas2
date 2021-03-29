@@ -3,7 +3,7 @@ from pyas2 import models
 from pyas2 import as2lib
 from email import utils as emailutils
 from email.parser import HeaderParser
-from compat import izip, email_msg_from_value
+from pyas2.compat import izip, email_msg_from_value
 import os
 
 TEST_DIR = os.path.join((os.path.dirname(

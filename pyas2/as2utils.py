@@ -11,7 +11,7 @@ from django.utils.translation import ugettext as _
 from pyasn1.type import univ, namedtype, tag
 from pyasn1.codec.ber import encoder, decoder
 from M2Crypto import BIO, SMIME, X509
-from compat import StringIO, Generator, unicode_type, ensure_binary, \
+from pyas2.compat import StringIO, Generator, unicode_type, ensure_binary, \
     email_msg_from_value, compress_hexify
 
 key_pass = ''

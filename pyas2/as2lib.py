@@ -8,7 +8,7 @@ from django.utils.translation import ugettext as _
 from email.mime.multipart import MIMEMultipart
 from email.parser import HeaderParser
 from codecs import encode
-from compat import email_msg_from_value, ensure_binary, ensure_str
+from pyas2.compat import email_msg_from_value, ensure_binary, ensure_str
 from pyas2 import models
 from pyas2 import pyas2init
 from string import Template

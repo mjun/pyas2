@@ -20,7 +20,7 @@ import subprocess
 import tempfile
 import traceback
 import uuid
-from compat import ensure_binary, ensure_str, email_msg_from_value
+from pyas2.compat import ensure_binary, ensure_str, email_msg_from_value
 
 
 def server_error(request, template_name='500.html'):
