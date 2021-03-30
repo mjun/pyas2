@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
+
 import email
-import inspect
 import zlib
 import six
 import codecs
@@ -38,43 +38,3 @@ def get_payload(email_msg):
     if six.PY3:
         return email_msg.as_bytes()
     return email_msg.get_payload()
-
-
-def write_log(message):
-    import csv
-    with open('LOGS.csv', mode='a') as document:
-        writer = csv.writer(document, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        writer.writerow([message])
-
-
-# class BinaryBytesGenerator(BytesGenerator):
-#     """Override the bytes generator to better handle binary data."""
-#
-#     def _handle_text(self, msg):
-#         """
-#         Handle writing the binary messages to prevent default behaviour of
-#         newline replacements.
-#         """
-#         if msg.get(
-#             "Content-Transfer-Encoding"
-#         ) == "binary" and msg.get_content_subtype() in [
-#             "pkcs7-mime",
-#             "pkcs7-signature",
-#         ]:
-#             payload = msg.get_payload(decode=True)
-#             if payload is None:
-#                 return
-#             else:
-#                 self._fp.write(payload)
-#         else:
-#             super()._handle_text(msg)
-#
-#     _writeBody = _handle_text
-
-
-def raise_error(one, two):
-    stack = inspect.stack()
-    if not one == two:
-        write_log('Value is NOT equal {}'.format(stack))
-    else:
-        write_log('Value IS equal {}'.format(stack))
