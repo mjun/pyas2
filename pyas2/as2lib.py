@@ -1,7 +1,7 @@
 import requests
 import email
 import hashlib
-import as2utils
+from . import as2utils
 import os
 import base64
 from django.utils.translation import ugettext as _

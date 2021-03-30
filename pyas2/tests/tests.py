@@ -5,6 +5,8 @@ from email import utils as emailutils
 from email.parser import HeaderParser
 from pyas2.compat import izip, email_msg_from_value
 import os
+import unittest
+import six
 
 TEST_DIR = os.path.join((os.path.dirname(
     os.path.abspath(__file__))),  'fixtures')
@@ -592,6 +594,7 @@ class AS2SendReceiveTest(TestCase):
                 return all(lineA == lineB for lineA, lineB in izip(a, b))
 
 
+@unittest.skipIf(six.PY3, 'Skip sterling test for PY3')
 class AS2SterlingIntegratorTest(TestCase):
     """Test cases against the Sterling B2B Integrator AS2 server."""
 
