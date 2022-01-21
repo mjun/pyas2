@@ -509,7 +509,7 @@ def send_message(message, payload):
             mdn_content = '%s: %s\n' % (
                 'message-id', mdn_headers.get('message-id', message.message_id))
             mdn_content += '%s: %s\n\n' % ('content-type', mdn_headers['content-type'])
-            mdn_content += response.content
+            mdn_content += ensure_str(response.content)
             models.Log.objects.create(message=message, status='S', text=_(u'Synchronous mdn received from partner'))
             pyas2init.logger.debug('Synchronous MDN for message %s received:\n%s' % (message.message_id, mdn_content))
             save_mdn(message, mdn_content)
