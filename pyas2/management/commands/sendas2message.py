@@ -1,5 +1,7 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.utils.translation import ugettext as _
+from six import ensure_text
+
 from pyas2 import models
 from pyas2 import as2lib
 from pyas2 import as2utils
@@ -73,7 +75,7 @@ class Command(BaseCommand):
             as2lib.send_message(message, payload)	
         except Exception:
             message.status = 'E'
-            txt = traceback.format_exc(None).decode('utf-8', 'ignore')
+            txt = ensure_text(traceback.format_exc(None))
             message.adv_status = \
                 _(u'Failed to send message, error:\n%(txt)s') % {'txt': txt}
             pyas2init.logger.error(message.adv_status)
