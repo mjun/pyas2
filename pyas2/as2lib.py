@@ -1,6 +1,9 @@
 import requests
 import email
 import hashlib
+
+from six import string_types
+
 from . import as2utils
 import os
 import base64
@@ -715,7 +718,7 @@ def dict_contents_equals(d1, d2):
             if k1.lower() == k2.lower():
                 if type(v1) != type(v2):
                     return False
-                if isinstance(v1, basestring) and v1.lower() != v2.lower():
+                if isinstance(v1, string_types) and v1.lower() != v2.lower():
                     return False
                 if v1 != v2:
                     return False
