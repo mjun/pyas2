@@ -1,5 +1,4 @@
 from django.db import models
-from django.core.files.storage import FileSystemStorage
 from django.utils.translation import ugettext as _
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -83,6 +82,7 @@ class Partner(models.Model):
     )
     SIGN_ALG_CHOICES = (
         ('sha1', 'SHA-1'),
+        ('sha256', 'SHA-256'),
     )
     MDN_TYPE_CHOICES = (
         ('SYNC', 'Synchronous'),

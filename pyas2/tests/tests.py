@@ -171,6 +171,39 @@ class AS2SendReceiveTest(TestCase):
         # Check if input and output files are the same
         self.assertTrue(AS2SendReceiveTest.compareFiles(self.payload.file, out_message.payload.file))
 
+    def testNoEncryptMessageSignMdnSHA256(self):
+        """ Test Permutation 3: Sender sends un-encrypted data and requests an signed receipt. """
+
+        # Create the partner with appropriate settings for this case
+        partner = models.Partner.objects.create(name='Client Partner',
+                                                as2_identifier='as2server',
+                                                target_url='http://localhost:8080/pyas2/as2receive',
+                                                compress=False,
+                                                mdn=True,
+                                                mdn_mode='SYNC',
+                                                mdn_sign='sha256',
+                                                signature_key=self.server_crt)
+
+        # Setup the message object and buid the message
+        message_id = emailutils.make_msgid().strip('<>')
+        in_message, response = self.buildSendMessage(message_id, partner)
+
+        # Check if a 200 response was received
+        self.assertEqual(response.status_code, 200)
+
+        # Check if message was processed successfully
+        out_message = models.Message.objects.get(message_id=message_id)
+        # AS2SendReceiveTest.printLogs(out_message)
+        self.assertEqual(out_message.status, 'S')
+
+        # Process the MDN for the in message and check status
+        AS2SendReceiveTest.buildMdn(in_message, response)
+        # AS2SendReceiveTest.printLogs(in_message)
+        self.assertEqual(in_message.status, 'S')
+
+        # Check if input and output files are the same
+        self.assertTrue(AS2SendReceiveTest.compareFiles(self.payload.file, out_message.payload.file))
+
     def testEncryptMessageNoMdn(self):
         """ Test Permutation 4: Sender sends encrypted data and does NOT request a receipt. """
 
@@ -265,6 +298,41 @@ class AS2SendReceiveTest(TestCase):
         # Check if input and output files are the same
         self.assertTrue(AS2SendReceiveTest.compareFiles(self.payload.file, out_message.payload.file))
 
+    def testEncryptMessageSignMdnSHA256(self):
+        """ Test Permutation 6: Sender sends encrypted data and requests an signed receipt. """
+
+        # Create the partner with appropriate settings for this case
+        partner = models.Partner.objects.create(name='Client Partner',
+                                                as2_identifier='as2server',
+                                                target_url='http://localhost:8080/pyas2/as2receive',
+                                                compress=False,
+                                                encryption='des_ede3_cbc',
+                                                encryption_key=self.server_crt,
+                                                mdn=True,
+                                                mdn_mode='SYNC',
+                                                mdn_sign='sha256',
+                                                signature_key=self.server_crt)
+
+        # Setup the message object and buid the message
+        message_id = emailutils.make_msgid().strip('<>')
+        in_message, response = self.buildSendMessage(message_id, partner)
+
+        # Check if a 200 response was received
+        self.assertEqual(response.status_code, 200)
+
+        # Check if message was processed successfully
+        out_message = models.Message.objects.get(message_id=message_id)
+        # AS2SendReceiveTest.printLogs(out_message)
+        self.assertEqual(out_message.status, 'S')
+
+        # Process the MDN for the in message and check status
+        AS2SendReceiveTest.buildMdn(in_message, response)
+        # AS2SendReceiveTest.printLogs(in_message)
+        self.assertEqual(in_message.status, 'S')
+
+        # Check if input and output files are the same
+        self.assertTrue(AS2SendReceiveTest.compareFiles(self.payload.file, out_message.payload.file))
+
     def testSignMessageNoMdn(self):
         """ Test Permutation 7: Sender sends signed data and does NOT request a receipt. """
 
@@ -292,6 +360,33 @@ class AS2SendReceiveTest(TestCase):
         # Check if input and output files are the same
         self.assertTrue(AS2SendReceiveTest.compareFiles(self.payload.file, out_message.payload.file))
 
+    def testSignMessageNoMdnSHA256(self):
+        """ Test Permutation 7: Sender sends signed data and does NOT request a receipt. """
+
+        # Create the partner with appropriate settings for this case
+        partner = models.Partner.objects.create(name='Client Partner',
+                                                as2_identifier='as2server',
+                                                target_url='http://localhost:8080/pyas2/as2receive',
+                                                compress=False,
+                                                signature='sha256',
+                                                signature_key=self.server_crt,
+                                                mdn=False)
+
+        # Build and send the message to server
+        message_id = emailutils.make_msgid().strip('<>')
+        in_message, response = self.buildSendMessage(message_id, partner)
+
+        # Check if a 200 response was received
+        self.assertEqual(response.status_code, 200)
+
+        # Check if message was processed successfully
+        out_message = models.Message.objects.get(message_id=message_id)
+        # AS2SendReceiveTest.printLogs(out_message)
+        self.assertEqual(out_message.status, 'S')
+
+        # Check if input and output files are the same
+        self.assertTrue(AS2SendReceiveTest.compareFiles(self.payload.file, out_message.payload.file))
+
     def testSignMessageMdn(self):
         """ Test Permutation 8: Sender sends signed data and requests an unsigned receipt. """
 
@@ -301,6 +396,38 @@ class AS2SendReceiveTest(TestCase):
                                                 target_url='http://localhost:8080/pyas2/as2receive',
                                                 compress=False,
                                                 signature='sha1',
+                                                signature_key=self.server_crt,
+                                                mdn=True)
+
+        # Setup the message object and buid the message
+        message_id = emailutils.make_msgid().strip('<>')
+        in_message, response = self.buildSendMessage(message_id, partner)
+
+        # Check if a 200 response was received
+        self.assertEqual(response.status_code, 200)
+
+        # Check if message was processed successfully
+        out_message = models.Message.objects.get(message_id=message_id)
+        # AS2SendReceiveTest.printLogs(out_message)
+        self.assertEqual(out_message.status, 'S')
+
+        # Process the MDN for the in message and check status
+        AS2SendReceiveTest.buildMdn(in_message, response)
+        # AS2SendReceiveTest.printLogs(in_message)
+        self.assertEqual(in_message.status, 'S')
+
+        # Check if input and output files are the same
+        self.assertTrue(AS2SendReceiveTest.compareFiles(self.payload.file, out_message.payload.file))
+
+    def testSignMessageMdnSHA256(self):
+        """ Test Permutation 8: Sender sends signed data and requests an unsigned receipt. """
+
+        # Create the partner with appropriate settings for this case
+        partner = models.Partner.objects.create(name='Client Partner',
+                                                as2_identifier='as2server',
+                                                target_url='http://localhost:8080/pyas2/as2receive',
+                                                compress=False,
+                                                signature='sha256',
                                                 signature_key=self.server_crt,
                                                 mdn=True)
 
@@ -357,6 +484,39 @@ class AS2SendReceiveTest(TestCase):
         # Check if input and output files are the same
         self.assertTrue(AS2SendReceiveTest.compareFiles(self.payload.file, out_message.payload.file))
 
+    def testSignMessageSignMdnSHA256(self):
+        """ Test Permutation 9: Sender sends signed data and requests an signed receipt. """
+
+        # Create the partner with appropriate settings for this case
+        partner = models.Partner.objects.create(name='Client Partner',
+                                                as2_identifier='as2server',
+                                                target_url='http://localhost:8080/pyas2/as2receive',
+                                                compress=False,
+                                                signature='sha256',
+                                                signature_key=self.server_crt,
+                                                mdn=True,
+                                                mdn_sign='sha256')
+
+        # Setup the message object and buid the message
+        message_id = emailutils.make_msgid().strip('<>')
+        in_message, response = self.buildSendMessage(message_id, partner)
+
+        # Check if a 200 response was received
+        self.assertEqual(response.status_code, 200)
+
+        # Check if message was processed successfully
+        out_message = models.Message.objects.get(message_id=message_id)
+        # AS2SendReceiveTest.printLogs(out_message)
+        self.assertEqual(out_message.status, 'S')
+
+        # Process the MDN for the in message and check status
+        AS2SendReceiveTest.buildMdn(in_message, response)
+        # AS2SendReceiveTest.printLogs(in_message)
+        self.assertEqual(in_message.status, 'S')
+
+        # Check if input and output files are the same
+        self.assertTrue(AS2SendReceiveTest.compareFiles(self.payload.file, out_message.payload.file))
+
     def testEncryptSignMessageNoMdn(self):
         """ Test Permutation 10: Sender sends encrypted and signed data and does NOT request a receipt. """
 
@@ -366,6 +526,35 @@ class AS2SendReceiveTest(TestCase):
                                                 target_url='http://localhost:8080/pyas2/as2receive',
                                                 compress=False,
                                                 signature='sha1',
+                                                signature_key=self.server_crt,
+                                                encryption='des_ede3_cbc',
+                                                encryption_key=self.server_crt,
+                                                mdn=False)
+
+        # Build and send the message to server
+        message_id = emailutils.make_msgid().strip('<>')
+        in_message, response = self.buildSendMessage(message_id, partner)
+
+        # Check if a 200 response was received
+        self.assertEqual(response.status_code, 200)
+
+        # Check if message was processed successfully
+        out_message = models.Message.objects.get(message_id=message_id)
+        # AS2SendReceiveTest.printLogs(out_message)
+        self.assertEqual(out_message.status, 'S')
+
+        # Check if input and output files are the same
+        self.assertTrue(AS2SendReceiveTest.compareFiles(self.payload.file, out_message.payload.file))
+
+    def testEncryptSignMessageNoMdnSHA256(self):
+        """ Test Permutation 10: Sender sends encrypted and signed data and does NOT request a receipt. """
+
+        # Create the partner with appropriate settings for this case
+        partner = models.Partner.objects.create(name='Client Partner',
+                                                as2_identifier='as2server',
+                                                target_url='http://localhost:8080/pyas2/as2receive',
+                                                compress=False,
+                                                signature='sha256',
                                                 signature_key=self.server_crt,
                                                 encryption='des_ede3_cbc',
                                                 encryption_key=self.server_crt,
@@ -397,6 +586,40 @@ class AS2SendReceiveTest(TestCase):
                                                 encryption='des_ede3_cbc',
                                                 encryption_key=self.server_crt,
                                                 signature='sha1',
+                                                signature_key=self.server_crt,
+                                                mdn=True)
+
+        # Setup the message object and build the message
+        message_id = emailutils.make_msgid().strip('<>')
+        in_message, response = self.buildSendMessage(message_id, partner)
+
+        # Check if a 200 response was received
+        self.assertEqual(response.status_code, 200)
+
+        # Check if message was processed successfully
+        out_message = models.Message.objects.get(message_id=message_id)
+        # AS2SendReceiveTest.printLogs(out_message)
+        self.assertEqual(out_message.status, 'S')
+
+        # Process the MDN for the in message and check status
+        AS2SendReceiveTest.buildMdn(in_message, response)
+        # AS2SendReceiveTest.printLogs(in_message)
+        self.assertEqual(in_message.status, 'S')
+
+        # Check if input and output files are the same
+        self.assertTrue(AS2SendReceiveTest.compareFiles(self.payload.file, out_message.payload.file))
+
+    def testEncryptSignMessageMdnSHA256(self):
+        """ Test Permutation 11: Sender sends encrypted and signed data and requests an unsigned receipt. """
+
+        # Create the partner with appropriate settings for this case
+        partner = models.Partner.objects.create(name='Client Partner',
+                                                as2_identifier='as2server',
+                                                target_url='http://localhost:8080/pyas2/as2receive',
+                                                compress=False,
+                                                encryption='des_ede3_cbc',
+                                                encryption_key=self.server_crt,
+                                                signature='sha256',
                                                 signature_key=self.server_crt,
                                                 mdn=True)
 
@@ -455,6 +678,41 @@ class AS2SendReceiveTest(TestCase):
         # Check if input and output files are the same
         self.assertTrue(AS2SendReceiveTest.compareFiles(self.payload.file, out_message.payload.file))
 
+    def testEncryptSignMessageSignMdnSHA256(self):
+        """ Test Permutation 12: Sender sends encrypted and signed data and requests an signed receipt. """
+
+        # Create the partner with appropriate settings for this case
+        partner = models.Partner.objects.create(name='Client Partner',
+                                                as2_identifier='as2server',
+                                                target_url='http://localhost:8080/pyas2/as2receive',
+                                                compress=False,
+                                                encryption='des_ede3_cbc',
+                                                encryption_key=self.server_crt,
+                                                signature='sha256',
+                                                signature_key=self.server_crt,
+                                                mdn=True,
+                                                mdn_sign='sha256')
+
+        # Setup the message object and buid the message
+        message_id = emailutils.make_msgid().strip('<>')
+        in_message, response = self.buildSendMessage(message_id, partner)
+
+        # Check if a 200 response was received
+        self.assertEqual(response.status_code, 200)
+
+        # Check if message was processed successfully
+        out_message = models.Message.objects.get(message_id=message_id)
+        # AS2SendReceiveTest.printLogs(out_message)
+        self.assertEqual(out_message.status, 'S')
+
+        # Process the MDN for the in message and check status
+        AS2SendReceiveTest.buildMdn(in_message, response)
+        # AS2SendReceiveTest.printLogs(in_message)
+        self.assertEqual(in_message.status, 'S')
+
+        # Check if input and output files are the same
+        self.assertTrue(AS2SendReceiveTest.compareFiles(self.payload.file, out_message.payload.file))
+
     def testCompressEncryptSignMessageSignMdn(self):
         """ Test Permutation 13: Sender sends compressed, encrypted and signed data and requests an signed receipt. """
 
@@ -469,6 +727,41 @@ class AS2SendReceiveTest(TestCase):
                                                 signature_key=self.server_crt,
                                                 mdn=True,
                                                 mdn_sign='sha1')
+
+        # Setup the message object and buid the message
+        message_id = emailutils.make_msgid().strip('<>')
+        in_message, response = self.buildSendMessage(message_id, partner)
+
+        # Check if a 200 response was received
+        self.assertEqual(response.status_code, 200)
+
+        # Check if message was processed successfully
+        out_message = models.Message.objects.get(message_id=message_id)
+        # AS2SendReceiveTest.printLogs(out_message)
+        self.assertEqual(out_message.status, 'S')
+
+        # Process the MDN for the in message and check status
+        AS2SendReceiveTest.buildMdn(in_message, response)
+        # AS2SendReceiveTest.printLogs(in_message)
+        self.assertEqual(in_message.status, 'S')
+
+        # Check if input and output files are the same
+        self.assertTrue(AS2SendReceiveTest.compareFiles(self.payload.file, out_message.payload.file))
+
+    def testCompressEncryptSignMessageSignMdnSHA256(self):
+        """ Test Permutation 13: Sender sends compressed, encrypted and signed data and requests an signed receipt. """
+
+        # Create the partner with appropriate settings for this case
+        partner = models.Partner.objects.create(name='Client Partner',
+                                                as2_identifier='as2server',
+                                                target_url='http://localhost:8080/pyas2/as2receive',
+                                                compress=True,
+                                                encryption='des_ede3_cbc',
+                                                encryption_key=self.server_crt,
+                                                signature='sha256',
+                                                signature_key=self.server_crt,
+                                                mdn=True,
+                                                mdn_sign='sha256')
 
         # Setup the message object and buid the message
         message_id = emailutils.make_msgid().strip('<>')
@@ -505,6 +798,61 @@ class AS2SendReceiveTest(TestCase):
                                                 mdn=True,
                                                 mdn_mode='ASYNC',
                                                 mdn_sign='sha1')
+
+        # Setup the message object and build the message, do not send it
+        message_id = emailutils.make_msgid().strip('<>')
+        in_message, response = self.buildSendMessage(message_id, partner)
+
+        # Check if message was processed successfully
+        out_message = models.Message.objects.get(message_id=message_id)
+        # AS2SendReceiveTest.printLogs(in_message)
+        self.assertEqual(out_message.status, 'S')
+
+        # Check if input and output files are the same
+        self.assertTrue(AS2SendReceiveTest.compareFiles(self.payload.file, out_message.payload.file))
+
+        # Process the ASYNC MDN for the in message and check status
+        message_headers = self.header_parser.parsestr(out_message.mdn.headers)
+        http_headers = {}
+        for header in message_headers.keys():
+            key = 'HTTP_%s' % header.replace('-', '_').upper()
+            http_headers[key] = message_headers[header]
+        with open(out_message.mdn.file, 'rb') as mdn_file:
+            mdn_content = mdn_file.read()
+
+        # Switch the out and in messages, this is to prevent duplicate message from being picked
+        out_message.delete()
+        in_message.pk = message_id
+        in_message.payload = None
+        in_message.save()
+
+        # Send the async mdn and check for its status
+        content_type = http_headers.pop('HTTP_CONTENT_TYPE')
+        response = self.client.post('/pyas2/as2receive',
+                                    data=mdn_content,
+                                    content_type=content_type,
+                                    **http_headers)
+        self.assertEqual(response.status_code, 200)
+
+        in_message = models.Message.objects.get(message_id=message_id)
+        # AS2SendReceiveTest.printLogs(in_message)
+        self.assertEqual(in_message.status, 'S')
+
+    def testEncryptSignMessageAsyncSignMdnSHA256(self):
+        """ Test Permutation 14: Sender sends encrypted and signed data and requests an Asynchronous signed receipt. """
+
+        # Create the partner with appropriate settings for this case
+        partner = models.Partner.objects.create(name='Client Partner',
+                                                as2_identifier='as2server',
+                                                target_url='http://localhost:8080/pyas2/as2receive',
+                                                compress=False,
+                                                encryption='des_ede3_cbc',
+                                                encryption_key=self.server_crt,
+                                                signature='sha256',
+                                                signature_key=self.server_crt,
+                                                mdn=True,
+                                                mdn_mode='ASYNC',
+                                                mdn_sign='sha256')
 
         # Setup the message object and build the message, do not send it
         message_id = emailutils.make_msgid().strip('<>')

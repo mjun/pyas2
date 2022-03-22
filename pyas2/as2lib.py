@@ -272,7 +272,8 @@ def build_mdn(message, status, **kwargs):
             mic_alg, signature = as2utils.sign_payload(
                     as2utils.canonicalize(as2utils.mimetostring(mdn_report, 0) + b'\n'),
                     str(message.organization.signature_key.certificate.path),
-                    str(message.organization.signature_key.certificate_passphrase)
+                    str(message.organization.signature_key.certificate_passphrase),
+                    message.partner.signature or 'sha1'
             )
             pyas2init.logger.debug('Signature for MDN created:\n%s' % signature.as_string())
             signed_report.set_param('micalg', mic_alg)
@@ -401,7 +402,8 @@ def build_message(message):
         signed_message.attach(payload)
         mic_alg, signature = as2utils.sign_payload(mic_content,
                                                    str(message.organization.signature_key.certificate.path),
-                                                   str(message.organization.signature_key.certificate_passphrase))
+                                                   str(message.organization.signature_key.certificate_passphrase),
+                                                   message.partner.signature)
         signed_message.set_param('micalg', mic_alg)
         signed_message.attach(signature)
         signed_message.as_string()
@@ -437,10 +439,11 @@ def build_message(message):
             as2_header['receipt-delivery-option'] = pyas2init.gsettings['mdn_url']
             message.mdn_mode = 'ASYNC'
 
-    # If MIC content is set, i.e. message has been signed then calulcate the MIC
+    # If MIC content is set, i.e. message has been signed then calculate the MIC
     if mic_content:
         pyas2init.logger.debug("Calculating MIC with alg %s for content:\n%s" % (mic_alg, mic_content))
-        calculate_mic = getattr(hashlib, mic_alg.replace('-', ''), hashlib.sha1)
+        default_hasher = hashlib.sha256 if message.partner.mdn_sign == 'sha256' else hashlib.sha1
+        calculate_mic = getattr(hashlib, mic_alg.replace('-', ''), default_hasher)
         message.mic = ensure_str(base64.b64encode(calculate_mic(mic_content).digest()).strip())
 
     # Extract the As2 headers as a string and save it to the message object

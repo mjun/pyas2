@@ -342,7 +342,7 @@ def decrypt_payload(payload, key, passphrase):
     return privkey.decrypt(p7)
 
 
-def sign_payload(data, key, passphrase):
+def sign_payload(data, key, passphrase, algo='sha1'):
     global key_pass
     key_pass = passphrase
     mic_alg, signature = None, None
@@ -350,7 +350,7 @@ def sign_payload(data, key, passphrase):
     # Sign the message with the key provided
     signer = SMIME.SMIME()
     signer.load_key(key, callback=get_key_passphrase)
-    sign = signer.sign(BIO.MemoryBuffer(data), SMIME.PKCS7_DETACHED)
+    sign = signer.sign(BIO.MemoryBuffer(data), SMIME.PKCS7_DETACHED, algo=algo)
     out = BIO.MemoryBuffer()
     buf = BIO.MemoryBuffer(data)
     signer.write(out, sign, buf)
