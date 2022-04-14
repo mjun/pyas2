@@ -50,6 +50,7 @@ Features
 * The following hash algorithms are supported:
 
     * SHA-1
+    * SHA-256
 
 Documentation
 ~~~~~~~~~~~~~

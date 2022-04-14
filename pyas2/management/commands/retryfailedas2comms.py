@@ -36,7 +36,7 @@ class Command(BaseCommand):
                 # Build and resend the AS2 message
                 payload = as2lib.build_message(failed_msg)
                 as2lib.send_message(failed_msg, payload)
-            except Exception, e:
+            except Exception as e:
                 # In case of any errors mark message as failed and send email if enabled
                 failed_msg.status = 'E'
                 models.Log.objects.create(message=failed_msg,
