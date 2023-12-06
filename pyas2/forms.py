@@ -1,9 +1,7 @@
 from django.core.exceptions import ValidationError
 
-from pyas2 import models
 from django import forms
-from pyas2 import viewlib
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 HIDDEN_INPUT = forms.widgets.HiddenInput
 
