@@ -6,7 +6,7 @@ import collections
 import zlib
 import time
 import traceback
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from pyasn1.type import univ, namedtype, tag
 from pyasn1.codec.ber import encoder, decoder
 from M2Crypto import BIO, SMIME, X509

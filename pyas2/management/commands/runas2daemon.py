@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from pyas2 import models
 from pyas2 import pyas2init
 from pyas2 import as2utils

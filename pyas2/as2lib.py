@@ -4,7 +4,7 @@ import hashlib
 import as2utils
 import os
 import base64
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from email.mime.multipart import MIMEMultipart
 from email.parser import HeaderParser
 from pyas2 import models

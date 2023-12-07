@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.core.handlers.wsgi import WSGIHandler
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from pyas2 import pyas2init
 import pyas2
 import os
